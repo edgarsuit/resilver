@@ -1,4 +1,6 @@
 output.csv
-resilver.log
+resilver.log*
 resilver_debug.py
 zpool_status_debug
+output_old.csv
+fio_stats*
