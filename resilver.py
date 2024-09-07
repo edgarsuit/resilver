@@ -9,13 +9,14 @@
 
 import subprocess, shlex, math, time, os, random, csv, signal, sys, logging, psutil, shutil
 
-fill_percent = 70             # Target fill percent
+fill_percent = 70             # Target pool fill percent for all tests
 physical_disk_size = "7.3T"   # Size of physical disks
 format_disks = True           # Format disks before creating pool
 format_size = "100G"          # Size to format disks to
 target_disk = "sdbz"          # Disk to offline/online dring testing
-results_file = "output.csv"   # Output file
-log_file = "resilver.log"     # Log file
+results_file = "output.csv"   # Output file name
+log_file = "resilver.log"     # Log file name
+append_results = False        # Append results to existing output file instead of creating a new one
 
 # starting_run can be used to resume testing from a specific run number
 # First value is the layout, second is the fragmentation level, and third is the test schedule
@@ -110,6 +111,8 @@ def main():
    global test_index
    global f
 
+   overall_start_time = time.time()
+
    # Rotate out previous log file (if it exists)
    try:
       os.rename(log_file,log_file + ".old")
@@ -123,7 +126,7 @@ def main():
 
    # Setup main output file
    # Check if output file exists and has a header row
-   if os.path.isfile(results_file):
+   if os.path.isfile(results_file) and append_results == True:
       f = open(results_file,"r")
       header = f.readline().strip()
       if "Test Index" in header:
@@ -138,7 +141,11 @@ def main():
          f = open(results_file,"w")
          results = set_up_csv(f)
    else:
-      # Results file does not exist, create new one
+      # Create a new results file, rename old one if it exists
+      try:
+         os.rename(results_file,results_file + ".old")
+      except:
+         pass
       f = open(results_file,"w")
       results = set_up_csv(f)
 
@@ -206,7 +213,8 @@ def main():
             test_number = layouts.index(layout)*len(frag_schedule)*len(test_schedule) + frag_schedule.index(frag)*len(test_schedule) + test_schedule.index(test)
             test_index = "[" + str(layouts.index(layout)) + ", " + str(frag_schedule.index(frag)) + ", " + str(test_schedule.index(test)) + "]"
             # Log test index
-            log.info("Starting test index " + test_index + " (" + str(test_number) + "/" + str(total_tests) + ")")
+            elapsed_time = sec_to_dhms(time.time() - overall_start_time)
+            log.info("Starting test index " + test_index + " (" + str(test_number) + "/" + str(total_tests) + ") | Total runtime: " + elapsed_time)
 
             # Set up latency tracking variables
             num_write_latency_samples_mon = 1
@@ -388,9 +396,12 @@ def main():
             online_disk(target_disk)
 
             # Sleep for 30 seconds between tests
-            log.info("Sleeping 30 seconds...")
+            log.info("Sleeping 30 seconds to let pool recover...")
             time.sleep(30)
    
+   # Log completion time
+   log.info("All tests completed in " + sec_to_dhms(time.time() - overall_start_time))
+
    # Close output file after all tests completed
    f.close()
 
