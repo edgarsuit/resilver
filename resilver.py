@@ -16,12 +16,12 @@ format_size = "100G"          # Size to format disks to
 target_disk = "sdbz"          # Disk to offline/online dring testing
 results_file = "output.csv"   # Output file name
 log_file = "resilver.log"     # Log file name
-append_results = False        # Append results to existing output file instead of creating a new one
+append_results = True        # Append results to existing output file instead of creating a new one
 
 # starting_run can be used to resume testing from a specific run number
 # First value is the layout, second is the fragmentation level, and third is the test schedule
 # [0,0,0] starts from the beginning
-starting_test = [0, 0, 0]
+starting_test = [5, 0, 0]
 
 # ZFS layouts to test
 # layout: ZFS layout
@@ -153,12 +153,15 @@ def main():
    try:
       os.mkdir("fio_stats")
    except:
-      try:
-         os.rename("fio_stats","fio_stats_old")
-      except:
-         shutil.rmtree("fio_stats_old")
-         os.rename("fio_stats","fio_stats_old")
-      os.mkdir("fio_stats")
+      if append_results == False:
+         try:
+            os.rename("fio_stats","fio_stats_old")
+         except:
+            shutil.rmtree("fio_stats_old")
+            os.rename("fio_stats","fio_stats_old")
+         os.mkdir("fio_stats")
+      else:
+         pass
 
    # Display total number of tests to run and starting test number
    total_tests = len(layouts)*len(frag_schedule)*len(test_schedule)
@@ -190,7 +193,7 @@ def main():
          test_index = "[" + str(layouts.index(layout)) + ", " + str(frag_schedule.index(frag)) + ", -]"
          
          # fill_pool() returns the speed at which the pool was filled
-         fill_speed = fill_pool(fill_percent,frag) + "G/s"
+         fill_speed = fill_pool(fill_percent,frag)
 
          # Gather pool status for results CSV
          zfs_status = subprocess.check_output("zfs list -Hpo used,available tank/test",shell=True).decode("utf-8")
@@ -359,6 +362,12 @@ def main():
             write_monitor_handle.terminate()
             log.info("Read and write latency monitoring terminated")
 
+            # Kill any running instances of fio, otherwise pool destroy can fail
+            try:
+               subprocess.check_output("pkill fio",shell=True)
+            except:
+               pass
+
             # Clean up scan and issue speed values if needed
             if scan_speed_avg == 0: scan_speed_avg = "-"
             if issue_speed_avg == 0: issue_speed_avg = "-"
@@ -432,7 +441,7 @@ def set_up_csv(f):
       "Scan Speed (M/s)",
       "Issued",
       "Issue Speed (M/s)",
-      "Fill Speed"])
+      "Fill Speed (Gi/s)"])
    return results
 
 def get_fio_stats(
