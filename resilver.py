@@ -16,12 +16,12 @@ format_size = "100G"          # Size to format disks to
 target_disk = "sdbz"          # Disk to offline/online dring testing
 results_file = "output.csv"   # Output file name
 log_file = "resilver.log"     # Log file name
-append_results = True        # Append results to existing output file instead of creating a new one
+append_results = False        # Append results to existing output file instead of creating a new one
 
 # starting_run can be used to resume testing from a specific run number
 # First value is the layout, second is the fragmentation level, and third is the test schedule
 # [0,0,0] starts from the beginning
-starting_test = [5, 0, 0]
+starting_test = [0, 0, 0]
 
 # ZFS layouts to test
 # layout: ZFS layout
@@ -175,7 +175,7 @@ def main():
 
    # Kill old instances of fio
    try:
-      subprocess.check_output("pkill fio",shell=True)
+      subprocess.check_output("pkill -9  fio",shell=True)
    except:
       pass
 
@@ -360,13 +360,8 @@ def main():
                log.info("CPU stress terminated")
             read_monitor_handle.terminate()
             write_monitor_handle.terminate()
+            time.sleep(5)
             log.info("Read and write latency monitoring terminated")
-
-            # Kill any running instances of fio, otherwise pool destroy can fail
-            try:
-               subprocess.check_output("pkill fio",shell=True)
-            except:
-               pass
 
             # Clean up scan and issue speed values if needed
             if scan_speed_avg == 0: scan_speed_avg = "-"
@@ -769,14 +764,42 @@ def create_pool(layout,vdev_width,recordsize,minspares):
 # Destroy zpool if it exists
 def destroy_pool():
    global log
+   
+   start = time.time()
+   log.info("Destroying pool...")
+   
+   # Kill any running instances of fio, otherwise pool destroy can fail
    try:
-      start = time.time()
-      log.info("Destroying pool...")
-      subprocess.check_output("zpool destroy tank",shell=True,stderr=subprocess.DEVNULL)
-      time_taken = time.time() - start
-      log.info("Destroyed pool in " + sec_to_dhms(time_taken))
+      subprocess.check_output("pkill -9 fio",shell=True)
+      log.info("Killed lingering fio processes.")
+      time.sleep(1)
    except:
       pass
+   
+   pool_status = "online"
+   while pool_status == "online":
+      # Check if pool exists and is online
+      try:
+         pool_status = subprocess.check_output("zpool list -Ho name tank",shell=True,stderr=subprocess.DEVNULL).decode("utf-8").strip()
+         if pool_status == "tank": pool_status = "online"
+      except:
+         pool_status = "offline"
+         break
+
+      # If pool is online, destroy it
+      try:
+         subprocess.check_output("zpool destroy tank",shell=True,stderr=subprocess.DEVNULL)
+      except:
+         try:
+            subprocess.check_output("pkill -9 fio",shell=True)
+            log.info("Killed lingering fio processes.")
+            time.sleep(1)
+         except:
+            log.info("Cound not destroy pool or kill fio processes.")
+            time.sleep(5)
+      
+   time_taken = time.time() - start
+   log.info("Destroyed pool in " + sec_to_dhms(time_taken))
 
 # Fill pool to a specified percentage with a specified fragmentation level
 # Moderate (~30%) and high fragmentation (~50%) levels are achieved by writing small, unaligned blocks to fill up the pool
@@ -903,7 +926,7 @@ def fill_pool(fill_percent,frag_level):
       total = used + avail
       prune_size = round(total * prune_percent/100,2)
 
-      # Adjust the target prune percentage to overshoot and terminate early (otherwise we may prune slightly too few or too many files)
+      # Adjust the target prune percentage to overshoot and terminate early (otherwise we may prune slightly too few files)
       prune_percent += 5
 
       # Get file count
