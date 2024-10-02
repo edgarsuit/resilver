@@ -16,12 +16,12 @@ format_size = "100G"          # Size to format disks to
 target_disk = "sdbz"          # Disk to offline/online dring testing
 results_file = "output.csv"   # Output file name
 log_file = "resilver.log"     # Log file name
-append_results = True        # Append results to existing output file instead of creating a new one
+append_results = False        # Append results to existing output file instead of creating a new one
 
 # starting_run can be used to resume testing from a specific run number
 # First value is the layout, second is the fragmentation level, and third is the test schedule
 # [0,0,0] starts from the beginning
-starting_test = [26, 0, 0]
+starting_test = [0, 0, 0]
 
 # ZFS layouts to test
 # layout: ZFS layout
@@ -409,7 +409,7 @@ def main():
 
       # Reset starting_test frag schedule 0 otherwise those tests will be skipped on the next run
       starting_test[1] = 0
-   
+
    # Log completion time
    log.info("All tests completed in " + sec_to_dhms(time.time() - overall_start_time))
 
