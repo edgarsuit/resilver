@@ -16,12 +16,12 @@ format_size = "100G"          # Size to format disks to
 target_disk = "sdbz"          # Disk to offline/online dring testing
 results_file = "output.csv"   # Output file name
 log_file = "resilver.log"     # Log file name
-append_results = False        # Append results to existing output file instead of creating a new one
+append_results = True        # Append results to existing output file instead of creating a new one
 
 # starting_run can be used to resume testing from a specific run number
 # First value is the layout, second is the fragmentation level, and third is the test schedule
 # [0,0,0] starts from the beginning
-starting_test = [0, 0, 0]
+starting_test = [26, 0, 0]
 
 # ZFS layouts to test
 # layout: ZFS layout
@@ -60,7 +60,7 @@ layouts = [
    {"layout": "raidz3",            "width": 10, "recordsize": "128k", "minspares": 0},    # 28
    {"layout": "raidz1",            "width": 10, "recordsize": "128k", "minspares": 0},    # 29
    {"layout": "mirror",            "width": 2,  "recordsize": "128k", "minspares": 1},    # 30
-   {"layout": "mirror",            "width": 3,  "recordsize": "128k", "minspares": 1}     # 31
+   {"layout": "mirror",            "width": 3,  "recordsize": "128k", "minspares": 1}     # 31  
 ]
 
 # Fragmentation levels to test on each configuration
@@ -109,6 +109,7 @@ fio_key = ("terse_version_3;fio_version;jobname;groupid;error;read_kb;read_bandw
 def main():
    global log
    global test_index
+   global starting_test
    global f
 
    overall_start_time = time.time()
@@ -402,6 +403,12 @@ def main():
             # Sleep for 30 seconds between tests
             log.info("Sleeping 30 seconds to let pool recover...")
             time.sleep(30)
+
+         # Reset starting_test schedule to 0 otherwise those tests will be skipped on the next run
+         starting_test[2] = 0
+
+      # Reset starting_test frag schedule 0 otherwise those tests will be skipped on the next run
+      starting_test[1] = 0
    
    # Log completion time
    log.info("All tests completed in " + sec_to_dhms(time.time() - overall_start_time))
@@ -980,10 +987,6 @@ def get_resilver_status():
 
    # Get resilver status from zpool status output
    resilver_status = subprocess.check_output("zpool status tank",shell=True).decode("utf-8")
-   
-   # Parsing the zpool status output often fails, so write the output to a file for debugging
-#   with open("zpool_status_debug","w") as f:
-#      f.write(resilver_status)
 
    # The output of the zpool status command is slightly different for different ZFS layouts
    if "draid" in resilver_status:
