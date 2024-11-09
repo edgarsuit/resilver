@@ -1,6 +1,7 @@
-output.csv
-resilver.log*
+*.log
+*.csv
+*.old
 resilver_debug.py
-zpool_status_debug
-output_old.csv
 fio_stats*
+first_run*
+plots*

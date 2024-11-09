@@ -13,54 +13,75 @@ fill_percent = 70             # Target pool fill percent for all tests
 physical_disk_size = "7.3T"   # Size of physical disks
 format_disks = True           # Format disks before creating pool
 format_size = "100G"          # Size to format disks to
-target_disk = "sdbz"          # Disk to offline/online dring testing
+target_disk = "sdaa"          # Disk to offline/online during testing
 results_file = "output.csv"   # Output file name
 log_file = "resilver.log"     # Log file name
-append_results = False        # Append results to existing output file instead of creating a new one
+append_results = True        # Append results to existing output file instead of creating a new one
 
 # starting_run can be used to resume testing from a specific run number
-# First value is the layout, second is the fragmentation level, and third is the test schedule
-# [0,0,0] starts from the beginning
-starting_test = [0, 0, 0]
+# First value is the layout, second is the fragmentation level, third is the recordsize, and fourth is the test schedule
+# [0,0,0,0] starts from the beginning
+starting_test = [8, 0, 0, 0]
+
+# Total number of disks in the pool
+TOTAL_NUM_DISKS = 82
 
 # ZFS layouts to test
 # layout: ZFS layout
 # width: vdev width
-# recordsize: ZFS recordsize
 # minspares: Minimum number of spares in the vdev
 layouts = [
-   {"layout": "draid2:32d:82c:2s", "width": 82, "recordsize": "1M",   "minspares": 0},    # 0
-   {"layout": "draid2:16d:82c:2s", "width": 82, "recordsize": "1M",   "minspares": 0},    # 1
-   {"layout": "draid2:8d:82c:2s",  "width": 82, "recordsize": "1M",   "minspares": 0},    # 2
-   {"layout": "draid2:4d:82c:2s",  "width": 82, "recordsize": "1M",   "minspares": 0},    # 3
-   {"layout": "draid2:32d:41c:1s", "width": 41, "recordsize": "1M",   "minspares": 0},    # 4
-   {"layout": "draid2:16d:41c:1s", "width": 41, "recordsize": "1M",   "minspares": 0},    # 5
-   {"layout": "draid2:8d:41c:1s",  "width": 41, "recordsize": "1M",   "minspares": 0},    # 6
-   {"layout": "draid2:4d:41c:1s",  "width": 41, "recordsize": "1M",   "minspares": 0},    # 7
-   {"layout": "raidz2",            "width": 40, "recordsize": "1M",   "minspares": 0},    # 8
-   {"layout": "raidz2",            "width": 20, "recordsize": "1M",   "minspares": 0},    # 9
-   {"layout": "raidz2",            "width": 10, "recordsize": "1M",   "minspares": 0},    # 10
-   {"layout": "raidz2",            "width": 5,  "recordsize": "1M",   "minspares": 0},    # 11
-   {"layout": "raidz3",            "width": 10, "recordsize": "1M",   "minspares": 0},    # 12
-   {"layout": "raidz1",            "width": 10, "recordsize": "1M",   "minspares": 0},    # 13
-   {"layout": "mirror",            "width": 2,  "recordsize": "1M",   "minspares": 1},    # 14
-   {"layout": "mirror",            "width": 3,  "recordsize": "1M",   "minspares": 1},    # 15
-   {"layout": "draid2:32d:82c:2s", "width": 82, "recordsize": "128k", "minspares": 0},    # 16
-   {"layout": "draid2:16d:82c:2s", "width": 82, "recordsize": "128k", "minspares": 0},    # 17
-   {"layout": "draid2:8d:82c:2s",  "width": 82, "recordsize": "128k", "minspares": 0},    # 18
-   {"layout": "draid2:4d:82c:2s",  "width": 82, "recordsize": "128k", "minspares": 0},    # 19
-   {"layout": "draid2:32d:41c:1s", "width": 41, "recordsize": "128k", "minspares": 0},    # 20
-   {"layout": "draid2:16d:41c:1s", "width": 41, "recordsize": "128k", "minspares": 0},    # 21
-   {"layout": "draid2:8d:41c:1s",  "width": 41, "recordsize": "128k", "minspares": 0},    # 22
-   {"layout": "draid2:4d:41c:1s",  "width": 41, "recordsize": "128k", "minspares": 0},    # 23
-   {"layout": "raidz2",            "width": 40, "recordsize": "128k", "minspares": 0},    # 24
-   {"layout": "raidz2",            "width": 20, "recordsize": "128k", "minspares": 0},    # 25
-   {"layout": "raidz2",            "width": 10, "recordsize": "128k", "minspares": 0},    # 26
-   {"layout": "raidz2",            "width": 5,  "recordsize": "128k", "minspares": 0},    # 27
-   {"layout": "raidz3",            "width": 10, "recordsize": "128k", "minspares": 0},    # 28
-   {"layout": "raidz1",            "width": 10, "recordsize": "128k", "minspares": 0},    # 29
-   {"layout": "mirror",            "width": 2,  "recordsize": "128k", "minspares": 1},    # 30
-   {"layout": "mirror",            "width": 3,  "recordsize": "128k", "minspares": 1}     # 31  
+   # SECOND RUN LAYOUTS
+   {"layout": "draid1:32d:82c:2s", "width": 82, "minspares": 0},    # 0
+   {"layout": "draid1:16d:82c:2s", "width": 82, "minspares": 0},    # 1
+   {"layout": "draid1:8d:82c:2s",  "width": 82, "minspares": 0},    # 2
+   {"layout": "draid1:4d:82c:2s",  "width": 82, "minspares": 0},    # 3
+   {"layout": "draid3:32d:82c:2s", "width": 82, "minspares": 0},    # 4
+   {"layout": "draid3:16d:82c:2s", "width": 82, "minspares": 0},    # 5
+   {"layout": "draid3:8d:82c:2s",  "width": 82, "minspares": 0},    # 6
+   {"layout": "draid3:4d:82c:2s",  "width": 82, "minspares": 0},    # 7
+   {"layout": "raidz2",            "width": 15, "minspares": 0},    # 8
+   {"layout": "raidz2",            "width": 25, "minspares": 0},    # 9
+   {"layout": "raidz2",            "width": 30, "minspares": 0},    # 10
+   {"layout": "raidz2",            "width": 35, "minspares": 0},    # 11
+   {"layout": "raidz2",            "width": 45, "minspares": 0},    # 12
+   {"layout": "raidz2",            "width": 50, "minspares": 0},    # 13
+   {"layout": "raidz1",            "width": 5,  "minspares": 0},    # 14
+   {"layout": "raidz1",            "width": 20, "minspares": 0},    # 15
+   {"layout": "raidz1",            "width": 30, "minspares": 0},    # 16
+   {"layout": "raidz1",            "width": 40, "minspares": 0},    # 17
+   {"layout": "raidz1",            "width": 50, "minspares": 0},    # 18
+   {"layout": "raidz3",            "width": 5,  "minspares": 0},    # 19
+   {"layout": "raidz3",            "width": 20, "minspares": 0},    # 20
+   {"layout": "raidz3",            "width": 30, "minspares": 0},    # 21
+   {"layout": "raidz3",            "width": 40, "minspares": 0},    # 22
+   {"layout": "raidz3",            "width": 50, "minspares": 0},    # 23
+   {"layout": "draid1:32d:41c:1s", "width": 41, "minspares": 0},    # 24
+   {"layout": "draid1:16d:41c:1s", "width": 41, "minspares": 0},    # 25
+   {"layout": "draid1:8d:41c:1s",  "width": 41, "minspares": 0},    # 26
+   {"layout": "draid1:4d:41c:1s",  "width": 41, "minspares": 0},    # 27
+   {"layout": "draid3:32d:41c:1s", "width": 41, "minspares": 0},    # 28
+   {"layout": "draid3:16d:41c:1s", "width": 41, "minspares": 0},    # 29
+   {"layout": "draid3:8d:41c:1s",  "width": 41, "minspares": 0},    # 30
+   {"layout": "draid3:4d:41c:1s",  "width": 41, "minspares": 0},    # 31
+
+   # ORIGINAL LAYOUTS
+   {"layout": "draid2:32d:82c:2s", "width": 82, "minspares": 0},    # 32
+   {"layout": "draid2:16d:82c:2s", "width": 82, "minspares": 0},    # 33
+   {"layout": "draid2:8d:82c:2s",  "width": 82, "minspares": 0},    # 34
+   {"layout": "draid2:4d:82c:2s",  "width": 82, "minspares": 0},    # 35
+   {"layout": "draid2:32d:41c:1s", "width": 41, "minspares": 0},    # 36
+   {"layout": "draid2:16d:41c:1s", "width": 41, "minspares": 0},    # 37
+   {"layout": "draid2:8d:41c:1s",  "width": 41, "minspares": 0},    # 38
+   {"layout": "draid2:4d:41c:1s",  "width": 41, "minspares": 0},    # 39
+   {"layout": "raidz2",            "width": 40, "minspares": 0},    # 40
+   {"layout": "raidz2",            "width": 20, "minspares": 0},    # 41
+   {"layout": "raidz2",            "width": 10, "minspares": 0},    # 42
+   {"layout": "raidz2",            "width": 5,  "minspares": 0},    # 43
+   {"layout": "raidz3",            "width": 10, "minspares": 0},    # 44
+   {"layout": "raidz1",            "width": 10, "minspares": 0},    # 45
+   {"layout": "mirror",            "width": 2,  "minspares": 1},    # 46
+   {"layout": "mirror",            "width": 3,  "minspares": 1}     # 47  
 ]
 
 # Fragmentation levels to test on each configuration
@@ -68,6 +89,11 @@ frag_schedule = [
    "none",     # 0
    "med",      # 1
    "high"      # 2
+]
+
+# Recordsize values to test on each configuration
+recordsize_schedule = [
+   "1M"        # 0
 ]
 
 # Tests to run on each configuration
@@ -104,7 +130,7 @@ fio_key = ("terse_version_3;fio_version;jobname;groupid;error;read_kb;read_bandw
    "disk_read_ticks;write_ticks;disk_queue_time;disk_util").split(";")
 
 # Main function
-# Formats disks if needed, itterates through layouts, fragmentation levels, and tests
+# Formats disks if needed, iterates through layouts, fragmentation levels, and tests
 # Writes results to a CSV file
 def main():
    global log
@@ -130,7 +156,7 @@ def main():
    if os.path.isfile(results_file) and append_results == True:
       f = open(results_file,"r")
       header = f.readline().strip()
-      if "Test Index" in header:
+      if "TestIndex" in header:
          # Results file exists and has a header row, open for appending
          f.close()
          f = open(results_file,"a")
@@ -165,8 +191,8 @@ def main():
          pass
 
    # Display total number of tests to run and starting test number
-   total_tests = len(layouts)*len(frag_schedule)*len(test_schedule)
-   starting_test_number = starting_test[0]*len(frag_schedule)*len(test_schedule) + starting_test[1]*len(test_schedule) + starting_test[2]
+   total_tests = len(layouts) * len(frag_schedule) * len(recordsize_schedule) * len(test_schedule)
+   starting_test_number = starting_test[0]*len(frag_schedule)*len(recordsize_schedule)*len(test_schedule) + starting_test[1]*len(recordsize_schedule)*len(test_schedule) + starting_test[2]*len(test_schedule) + starting_test[3]
    log.info("Total tests to run: " + str(total_tests) + " | Starting test number: " + str(starting_test_number))
 
    # Format disks if needed; destroy pool (if exists) before formatting
@@ -180,231 +206,310 @@ def main():
    except:
       pass
 
-   # Itterate through layouts
+   # Iterate through layouts
    for layout in layouts[starting_test[0]:]:
       log.info("Starting layout: " + layout["layout"])
       
-      # Itterate through fragmentation levels
+      # Iterate through fragmentation levels
       for frag in frag_schedule[starting_test[1]:]:
-         # Destroy, recreate, and refill pool
-         destroy_pool()
-         create_pool(layout["layout"],layout["width"],layout["recordsize"],layout["minspares"])
-         
-         # Initialize test index to diplay during pool fill
-         test_index = "[" + str(layouts.index(layout)) + ", " + str(frag_schedule.index(frag)) + ", -]"
-         
-         # fill_pool() returns the speed at which the pool was filled
-         fill_speed = fill_pool(fill_percent,frag)
+         log.info("Starting fragmentation level: " + frag)
 
-         # Gather pool status for results CSV
-         zfs_status = subprocess.check_output("zfs list -Hpo used,available tank/test",shell=True).decode("utf-8")
-         used = int(zfs_status.split()[0])
-         used_tib = round(used/1024**4,2)
-         avail = int(zfs_status.split()[1])
-         avail_tib = round(avail/1024**4,2)
-         used_percent = round(used/(used+avail)*100,2)
-         pool_size = used + avail
-         pool_size_tib = round(pool_size/1024**4,2)
-         frag_percent = subprocess.check_output("zpool list -Hpo frag tank",shell=True).decode("utf-8").strip()
-
-         # Before starting the tests, export and import the pool to clear ARC data
-         log.info("Exporting and importing pool to clear ARC...")
-         subprocess.check_output("zpool export tank",shell=True)
-         subprocess.check_output("zpool import tank",shell=True)
-
-         # Once pool is filled with appropriate fragmentation level, itterate through tests
-         for test in test_schedule[starting_test[2]:]:
-            test_number = layouts.index(layout)*len(frag_schedule)*len(test_schedule) + frag_schedule.index(frag)*len(test_schedule) + test_schedule.index(test)
-            test_index = "[" + str(layouts.index(layout)) + ", " + str(frag_schedule.index(frag)) + ", " + str(test_schedule.index(test)) + "]"
-            # Log test index
-            elapsed_time = sec_to_dhms(time.time() - overall_start_time)
-            log.info("Starting test index " + test_index + " (" + str(test_number) + "/" + str(total_tests) + ") | Total runtime: " + elapsed_time)
-
-            # Set up latency tracking variables
-            num_write_latency_samples_mon = 1
-            write_lat_mean_mon = 0
-            num_write_latency_samples_stress = 1
-            write_lat_mean_stress = 0
-            num_read_latency_samples = 1
-            read_lat_mean = 0
-
-            # Set up FIO stats CSV file
-            fio_stats_file = "fio_stats/" + test_index.replace("[","").replace("]","").replace(", ","-") + ".csv"   
-            fio_file = open(fio_stats_file,"w")
-
-            fio_stats = csv.writer(fio_file)
-            fio_stats.writerow([
-               "Write IOPS (monitor)",
-               "Write Bandwidth (MiB/s, monitor)",
-               "Write Latency (mSec, monitor)",
-               "Write IOPS (stress)",
-               "Write Bandwidth (MiB/s, stress)",
-               "Write Latency (mSec, stress)",
-               "Read IOPS",
-               "Read Bandwidth (MiB/s)",
-               "Read Latency (mSec)",
-               "CPU % User",
-               "CPU % System"
-            ])
-
-            # Start CPU and disk stress. If stress is set to "none", these functions will return 0
-            disk_stress_handle = disk_stress(test["disk"])
-            cpu_stress_handle = cpu_stress(test["cpu"])
-            read_monitor_handle = read_latency_monitor()
-            write_monitor_handle = write_latency_monitor()
-
-            # Gather CPU and disk stats before resilver starts
-            log.info("Gathering pre-resilver system stats for 60 seconds...")
-            for i in range(12):
-               get_fio_stats(
-                  disk_stress_handle,
-                  read_monitor_handle,
-                  write_monitor_handle,
-                  fio_stats,
-                  5,
-                  num_read_latency_samples,
-                  read_lat_mean,
-                  num_write_latency_samples_mon,
-                  write_lat_mean_mon,
-                  num_write_latency_samples_stress,
-                  write_lat_mean_stress)
+         # Iterate through recordsize values
+         for recordsize in recordsize_schedule[starting_test[2]:]:
+            log.info("Starting recordsize: " + recordsize)
             
-            # Offline target disk to start the resilver, log event in fio stat file, wait for 5 seconds before checking resilver status
-            offline_disk(target_disk)
-            fio_stats.writerow(["Resilver Start"])
-            fio_file.flush()
-            time.sleep(5)
+            # Destroy, recreate, and refill pool
+            destroy_pool()
+            create_pool(layout["layout"],layout["width"],recordsize,layout["minspares"])
+            
+            # Initialize test index to diplay during pool fill
+            test_index = "[" + str(layouts.index(layout)) + ", " + str(frag_schedule.index(frag)) + ", " + str(recordsize_schedule.index(recordsize)) + ", -]"
+            
+            # fill_pool() returns the speed at which the pool was filled
+            fill_speed = fill_pool(fill_percent,frag)
 
-            # Set up average speed tracking variables
-            scan_speed_avg = 0
-            scan_sample_count = 1
-            issue_speed_avg = 0
-            issue_sample_count = 1
+            # Gather pool status for results CSV
+            zfs_status = subprocess.check_output("zfs list -Hpo used,available tank/test",shell=True).decode("utf-8")
+            used = int(zfs_status.split()[0])
+            used_tib = round(used/1024**4,2)
+            avail = int(zfs_status.split()[1])
+            avail_tib = round(avail/1024**4,2)
+            used_percent = round(used/(used+avail)*100,2)
+            pool_size = used + avail
+            pool_size_tib = round(pool_size/1024**4,2)
+            frag_percent = subprocess.check_output("zpool list -Hpo frag tank",shell=True).decode("utf-8").strip()
 
-            # Wait for resilver to complete, checking status every 5 seconds
-            resilver_status = get_resilver_status()
-            while resilver_status[0] == "resilvering":
+            log.info("Sleeping 10 seconds to let fio clear...")
+            time.sleep(10)
 
-               # Calculate average scan speed
-               scan_speed = resilver_status[1]
-               try:
-                  if "T/s" in scan_speed:
-                     scan_speed_float = float(scan_speed.split("T/s")[0]) * 1000 * 1000
-                  elif "G/s" in scan_speed:
-                     scan_speed_float = float(scan_speed.split("G/s")[0]) * 1000
-                  elif "M/s" in scan_speed:
-                     scan_speed_float = float(scan_speed.split("M/s")[0])
-                  scan_speed_avg = (scan_speed_avg * (scan_sample_count - 1) + scan_speed_float)/scan_sample_count
-                  scan_sample_count += 1
-               
-               except:
-                  pass
+            # Once pool is filled with appropriate fragmentation level, iterate through tests
+            for test in test_schedule[starting_test[3]:]:
 
-               # Calculate average issue speed
-               issue_speed = resilver_status[2]
-               try:
-                  if "T/s" in issue_speed:
-                     issue_speed_float = float(issue_speed.split("T/s")[0]) * 1000 * 1000
-                  elif "G/s" in issue_speed:
-                     issue_speed_float = float(issue_speed.split("G/s")[0]) * 1000
-                  elif "M/s" in issue_speed:
-                     issue_speed_float = float(issue_speed.split("M/s")[0])
-                  issue_speed_avg = (issue_speed_avg * (issue_sample_count - 1) + issue_speed_float)/issue_sample_count
-                  issue_sample_count += 1
+               # Before starting the tests, export and import the pool to clear ARC data
+               log.info("Exporting and importing pool to clear ARC...")
+               subprocess.check_output("zpool export tank",shell=True)
+               subprocess.check_output("zpool import tank",shell=True)
+
+               test_number = layouts.index(layout)*len(frag_schedule)*len(recordsize_schedule)*len(test_schedule) + frag_schedule.index(frag)*len(recordsize_schedule)*len(test_schedule) + recordsize_schedule.index(recordsize)*len(test_schedule) + test_schedule.index(test)
+               test_index = "[" + str(layouts.index(layout)) + ", " + str(frag_schedule.index(frag)) + ", " + str(recordsize_schedule.index(recordsize)) + ", " + str(test_schedule.index(test)) + "]"
+               # Log test index
+               elapsed_time = sec_to_dhms(time.time() - overall_start_time)
+               log.info("Starting test index " + test_index + " (" + str(test_number) + "/" + str(total_tests) + ") | Total runtime: " + elapsed_time)
+
+               # Set up latency tracking variables
+               num_write_latency_samples_mon = 1
+               write_lat_mean_mon = 0
+               num_write_latency_samples_stress = 1
+               write_lat_mean_stress = 0
+               num_read_latency_samples = 1
+               read_lat_mean = 0
+
+               # Set up FIO stats CSV file
+               fio_stats_file = "fio_stats/" + test_index.replace("[","").replace("]","").replace(", ","-") + ".csv"   
+               fio_file = open(fio_stats_file,"w")
+
+               fio_stats = csv.writer(fio_file)
+               fio_stats.writerow([
+                  "Write IOPS (monitor)",
+                  "Write Bandwidth (MiB/s, monitor)",
+                  "Write Latency (mSec, monitor)",
+                  "Write IOPS (stress)",
+                  "Write Bandwidth (MiB/s, stress)",
+                  "Write Latency (mSec, stress)",
+                  "Read IOPS",
+                  "Read Bandwidth (MiB/s)",
+                  "Read Latency (mSec)",
+                  "CPU % User",
+                  "CPU % System"
+               ])
+
+               # Start CPU and disk stress. If stress is set to "none", these functions will return 0
+               disk_stress_handle = disk_stress(test["disk"])
+               cpu_stress_handle = cpu_stress(test["cpu"])
+               read_monitor_handle = read_latency_monitor()
+               write_monitor_handle = write_latency_monitor()
+
+               # Gather CPU and disk stats before resilver starts
+               log.info("Gathering pre-resilver system stats for 60 seconds...")
+               for i in range(12):
+                  get_fio_stats(
+                     disk_stress_handle,
+                     read_monitor_handle,
+                     write_monitor_handle,
+                     fio_stats,
+                     5,
+                     num_read_latency_samples,
+                     read_lat_mean,
+                     num_write_latency_samples_mon,
+                     write_lat_mean_mon,
+                     num_write_latency_samples_stress,
+                     write_lat_mean_stress)
                
-               except:
-                  pass
-               
-               # Log resilver status
-               percent_done = resilver_status[3]
-               time_left = resilver_status[4]
-               log.info(test_index + " Resilvering: " + percent_done + " (" + issue_speed + ", ETA " + time_left + ")")
-               
-               # Gather FIO stats
-               get_fio_stats(
-                  disk_stress_handle,
-                  read_monitor_handle,
-                  write_monitor_handle,
-                  fio_stats,
-                  0.1,
-                  num_read_latency_samples,
-                  read_lat_mean,
-                  num_write_latency_samples_mon,
-                  write_lat_mean_mon,
-                  num_write_latency_samples_stress,
-                  write_lat_mean_stress)
+               # Offline target disk to start the resilver, log event in fio stat file, wait for 5 seconds before checking resilver status
+               offline_disk(target_disk)
+               fio_stats.writerow(["Resilver Start"])
                fio_file.flush()
+               time.sleep(5)
 
-               # Call to psutil above blocks for 0.1 seconds, so we sleep for 4.9 seconds to keep the 5 second interval
-               time.sleep(4.9)
+               # Set up average speed tracking variables
+               scan_speed_avg = 0
+               scan_sample_count = 1
+               issue_speed_avg = 0
+               issue_sample_count = 1
 
-               # When resilver is at 100%, zpool status output can cause parse issues.
-               # If we fail to parse, wait 5 seconds and try again
-               try:
-                  resilver_status = get_resilver_status()
-               except:
-                  time.sleep(5)
-                  resilver_status = get_resilver_status()
-            
-            # Log resilver results
-            log.info("Resilver complete in " + resilver_status[1] + " | " + resilver_status[3] + " resilvered")
+               # Wait for resilver to complete, checking status every 5 seconds
+               resilver_status = get_resilver_status()
+               while resilver_status[0] == "resilvering":
 
-            # Calculate resilver time in seconds
-            resilver_time_seconds = int(resilver_status[1].split(":")[0])*60*60 + int(resilver_status[1].split(":")[1])*60 + int(resilver_status[1].split(":")[2])
+                  # Calculate average scan speed
+                  scan_speed = resilver_status[1]
+                  try:
+                     if "T/s" in scan_speed:
+                        scan_speed_float = float(scan_speed.split("T/s")[0]) * 1000 * 1000
+                     elif "G/s" in scan_speed:
+                        scan_speed_float = float(scan_speed.split("G/s")[0]) * 1000
+                     elif "M/s" in scan_speed:
+                        scan_speed_float = float(scan_speed.split("M/s")[0])
+                     scan_speed_avg = (scan_speed_avg * (scan_sample_count - 1) + scan_speed_float)/scan_sample_count
+                     scan_sample_count += 1
+                  
+                  except:
+                     pass
 
-            # Terminate stress tests
-            if disk_stress_handle != 0:
-               disk_stress_handle.terminate()
-               log.info("Disk stress terminated")
-            if cpu_stress_handle != 0:
-               cpu_stress_handle.terminate()
-               log.info("CPU stress terminated")
-            read_monitor_handle.terminate()
-            write_monitor_handle.terminate()
-            time.sleep(5)
-            log.info("Read and write latency monitoring terminated")
+                  # Calculate average issue speed
+                  issue_speed = resilver_status[2]
+                  try:
+                     if "T/s" in issue_speed:
+                        issue_speed_float = float(issue_speed.split("T/s")[0]) * 1000 * 1000
+                     elif "G/s" in issue_speed:
+                        issue_speed_float = float(issue_speed.split("G/s")[0]) * 1000
+                     elif "M/s" in issue_speed:
+                        issue_speed_float = float(issue_speed.split("M/s")[0])
+                     issue_speed_avg = (issue_speed_avg * (issue_sample_count - 1) + issue_speed_float)/issue_sample_count
+                     issue_sample_count += 1
+                  
+                  except:
+                     pass
+                  
+                  # Log resilver status
+                  percent_done = resilver_status[3]
+                  time_left = resilver_status[4]
+                  log.info(test_index + " Resilvering: " + percent_done + " (" + issue_speed + ", ETA " + time_left + ")")
+                  
+                  # Gather FIO stats
+                  get_fio_stats(
+                     disk_stress_handle,
+                     read_monitor_handle,
+                     write_monitor_handle,
+                     fio_stats,
+                     0.1,
+                     num_read_latency_samples,
+                     read_lat_mean,
+                     num_write_latency_samples_mon,
+                     write_lat_mean_mon,
+                     num_write_latency_samples_stress,
+                     write_lat_mean_stress)
+                  fio_file.flush()
 
-            # Clean up scan and issue speed values if needed
-            if scan_speed_avg == 0: scan_speed_avg = "-"
-            if issue_speed_avg == 0: issue_speed_avg = "-"
-            
-            # Write results from this run to CSV
-            results.writerow([
-               test_index,                # Test Index
-               layout["layout"],          # Layout
-               layout["width"],           # Width
-               layout["recordsize"],      # Recordsize
-               str(fill_percent) + "%",   # Target Fill Percent
-               used,                      # Used (bytes)
-               used_tib,                  # Used (TiB)
-               avail,                     # Available (bytes)
-               avail_tib,                 # Available (TiB)
-               str(used_percent) + "%",   # Used Percent
-               pool_size,                 # Pool Size (bytes)
-               pool_size_tib,             # Pool Size (TiB)
-               str(frag_percent) + "%",   # Fragmentation Percent
-               format_size,               # Disk Size
-               frag,                      # Fragmentation Level
-               test["cpu"],               # CPU Stress
-               test["disk"],              # Disk Stress
-               resilver_status[1],        # Resilver Time
-               resilver_time_seconds,     # Resilver Time (seconds)
-               resilver_status[2],        # Scanned
-               scan_speed_avg,            # Scan Speed (M/s)
-               resilver_status[3],        # Issued
-               issue_speed_avg,           # Issue Speed (M/s)
-               fill_speed                 # Fill Speed
-            ])
-            f.flush()
+                  # Call to psutil above blocks for 0.1 seconds, so we sleep for 4.9 seconds to keep the 5 second interval
+                  time.sleep(4.9)
 
-            # Online target disk; data hasn't changed to resilvering should happen in <1 second
-            online_disk(target_disk)
+                  # When resilver is at 100%, zpool status output can cause parse issues.
+                  # If we fail to parse, wait 5 seconds and try again
+                  try:
+                     resilver_status = get_resilver_status()
+                  except:
+                     time.sleep(5)
+                     resilver_status = get_resilver_status()
+               
+               # Log resilver results
+               log.info("Resilver complete in " + resilver_status[1] + " | " + resilver_status[3] + " resilvered")
 
-            # Sleep for 30 seconds between tests
-            log.info("Sleeping 30 seconds to let pool recover...")
-            time.sleep(30)
+               # Calculate resilver time in seconds and minutes
+               resilver_time_seconds = int(resilver_status[1].split(":")[0])*60*60 + int(resilver_status[1].split(":")[1])*60 + int(resilver_status[1].split(":")[2])
+               resilver_time_minutes = resilver_time_seconds/60
 
-         # Reset starting_test schedule to 0 otherwise those tests will be skipped on the next run
+               # Terminate stress tests
+               if disk_stress_handle != 0:
+                  disk_stress_handle.terminate()
+                  log.info("Disk stress terminated")
+               if cpu_stress_handle != 0:
+                  cpu_stress_handle.terminate()
+                  log.info("CPU stress terminated")
+               read_monitor_handle.terminate()
+               write_monitor_handle.terminate()
+               time.sleep(5)
+               log.info("Read and write latency monitoring terminated")
+
+               # Clean up scan and issue speed values if needed
+               if scan_speed_avg == 0: scan_speed_avg = "-"
+               if issue_speed_avg == 0: issue_speed_avg = "-"
+
+               # Get some extra data for the output sheet for the pool
+               vdev_type = layout["layout"].split(":")[0]
+               parity_level = get_parity_level(vdev_type, layout["width"])
+               num_vdevs = get_num_vdevs(vdev_type, layout["width"])
+               size_per_vdev = pool_size / num_vdevs
+
+               # Generate a concise layout description
+               if "draid" in layout["layout"]:
+                  layout_description = layout["layout"]
+                  draid_data_disks = layout["layout"].split(":")[1].split("d")[0]
+                  draid_spare_disks = layout["layout"].split(":")[3].split("s")[0]
+                  num_hot_spares = 0
+               elif "raidz" in layout["layout"]:
+                  layout_description = str(layout["width"]) + "-wide " + layout["layout"]
+                  draid_data_disks = "-"
+                  draid_spare_disks = "-"
+                  num_hot_spares = TOTAL_NUM_DISKS - (num_vdevs * layout["width"])
+               elif "mirror" in layout["layout"]:
+                  layout_description = str(layout["width"]) + "-way mirror"
+                  draid_data_disks = "-"
+                  draid_spare_disks = "-"
+                  num_hot_spares = TOTAL_NUM_DISKS - (num_vdevs * layout["width"])
+
+               # Calculate pool AFR
+               afr_array_1x = []
+               for disk_afr in range(1,11):
+                  afr = disk_afr / 100
+                  pool_afr = get_pool_afr(layout["width"], parity_level, num_vdevs, afr, resilver_time_seconds)
+                  afr_array_1x.append(pool_afr)
+
+               afr_array_100x = []
+               for disk_afr in range(1,11):
+                  afr = disk_afr / 100
+                  pool_afr = get_pool_afr(layout["width"], parity_level, num_vdevs, afr, resilver_time_seconds * 100)
+                  afr_array_100x.append(pool_afr)
+               
+               # Write results from this run to CSV
+               results.writerow([
+                  test_index,                # Test Index
+                  layout["layout"],          # Layout
+                  vdev_type,                 # Vdev Type
+                  layout["width"],           # Vdev Width
+                  parity_level,              # Parity Level
+                  num_vdevs,                 # Number of Vdevs
+                  num_hot_spares,            # Number of Hot Spares
+                  size_per_vdev,             # Size per Vdev
+                  layout_description,        # Layout Description
+                  draid_data_disks,          # dRAID Data Disks
+                  draid_spare_disks,         # dRAID Spare Disks
+                  recordsize,                # Recordsize
+                  str(fill_percent) + "%",   # Target Fill Percent
+                  used,                      # Used (bytes)
+                  used_tib,                  # Used (TiB)
+                  avail,                     # Available (bytes)
+                  avail_tib,                 # Available (TiB)
+                  str(used_percent) + "%",   # Used Percent
+                  pool_size,                 # Pool Size (bytes)
+                  pool_size_tib,             # Pool Size (TiB)
+                  str(frag_percent) + "%",   # Fragmentation Percent
+                  format_size,               # Disk Size
+                  frag,                      # Fragmentation Level
+                  test["cpu"],               # CPU Stress
+                  test["disk"],              # Disk Stress
+                  resilver_status[1],        # Resilver Time
+                  resilver_time_seconds,     # Resilver Time (seconds)
+                  resilver_time_minutes,     # Resilver Time (minutes)
+                  afr_array_1x[0],           # Pool AFR at 1% disk AFR
+                  afr_array_1x[1],           # Pool AFR at 2% disk AFR
+                  afr_array_1x[2],           # Pool AFR at 3% disk AFR
+                  afr_array_1x[3],           # Pool AFR at 4% disk AFR
+                  afr_array_1x[4],           # Pool AFR at 5% disk AFR
+                  afr_array_1x[5],           # Pool AFR at 6% disk AFR
+                  afr_array_1x[6],           # Pool AFR at 7% disk AFR
+                  afr_array_1x[7],           # Pool AFR at 8% disk AFR
+                  afr_array_1x[8],           # Pool AFR at 9% disk AFR
+                  afr_array_1x[9],           # Pool AFR at 10% disk AFR
+                  afr_array_100x[0],         # Pool AFR at 1% disk AFR (100x resilver time)
+                  afr_array_100x[1],         # Pool AFR at 2% disk AFR (100x resilver time)
+                  afr_array_100x[2],         # Pool AFR at 3% disk AFR (100x resilver time)
+                  afr_array_100x[3],         # Pool AFR at 4% disk AFR (100x resilver time)
+                  afr_array_100x[4],         # Pool AFR at 5% disk AFR (100x resilver time)
+                  afr_array_100x[5],         # Pool AFR at 6% disk AFR (100x resilver time)
+                  afr_array_100x[6],         # Pool AFR at 7% disk AFR (100x resilver time)
+                  afr_array_100x[7],         # Pool AFR at 8% disk AFR (100x resilver time)
+                  afr_array_100x[8],         # Pool AFR at 9% disk AFR (100x resilver time)
+                  afr_array_100x[9],         # Pool AFR at 10% disk AFR (100x resilver time)
+                  resilver_status[2],        # Scanned
+                  scan_speed_avg,            # Scan Speed (M/s)
+                  resilver_status[3],        # Issued
+                  issue_speed_avg,           # Issue Speed (M/s)
+                  fill_speed                 # Fill Speed
+               ])
+               f.flush()
+
+               # Online target disk; data hasn't changed to resilvering should happen in <1 second
+               online_disk(target_disk)
+
+               # Sleep for 30 seconds between tests
+               log.info("Sleeping 30 seconds to let pool recover...")
+               time.sleep(30)
+
+            # Reset starting_test test schedule to 0 otherwise those tests will be skipped on the next run
+            starting_test[3] = 0
+         
+         # Reset starting_test recordsize schedule to 0 otherwise those tests will be skipped on the next run
          starting_test[2] = 0
 
       # Reset starting_test frag schedule 0 otherwise those tests will be skipped on the next run
@@ -420,30 +525,59 @@ def main():
 def set_up_csv(f):
    results = csv.writer(f)
    results.writerow([
-      "Test Index",
+      "TestIndex",
       "Layout",
-      "Width",
-      "Recordsize",
-      "Target Fill %",
-      "Used (bytes)",
-      "Used (TiB)",
-      "Available (bytes)",
-      "Available (TiB)",
-      "Used Percent",
-      "Pool Size (bytes)",
-      "Pool Size (TiB)",
-      "Frag. Percent",
-      "Disk Size",
-      "Frag. Level",
-      "CPU Stress",
-      "Disk Stress",
-      "Resilver Time",
-      "Resilver Time (sec.)",
+      "VdevType",
+      "VdevWidth",
+      "ParityLevel",
+      "NumVdevs",
+      "NumHotSpares",
+      "SizePerVdev",
+      "LayoutDescription",
+      "dRAIDDataDisks",
+      "dRAIDSpareDisks",
+      "RecordSize",
+      "TargetFillPercent",
+      "UsedBytes",
+      "UsedTiB",
+      "AvailableBytes",
+      "AvailableTiB",
+      "UsedPercent",
+      "PoolSizeBytes",
+      "PoolSizeTiB",
+      "FragPercent",
+      "DiskSize",
+      "FragLevel",
+      "CPUStress",
+      "DiskStress",
+      "ResilverTime",
+      "ResilverTimeSeconds",
+      "ResilverTimeMinutes",
+      "PoolAFR1percent",
+      "PoolAFR2percent",
+      "PoolAFR3percent",
+      "PoolAFR4percent",
+      "PoolAFR5percent",
+      "PoolAFR6percent",
+      "PoolAFR7percent",
+      "PoolAFR8percent",
+      "PoolAFR9percent",
+      "PoolAFR10percent",
+      "PoolAFR1percent100x",
+      "PoolAFR2percent100x",
+      "PoolAFR3percent100x",
+      "PoolAFR4percent100x",
+      "PoolAFR5percent100x",
+      "PoolAFR6percent100x",
+      "PoolAFR7percent100x",
+      "PoolAFR8percent100x",
+      "PoolAFR9percent100x",
+      "PoolAFR10percent100x",
       "Scanned",
-      "Scan Speed (M/s)",
+      "ScanSpeedMBps",
       "Issued",
-      "Issue Speed (M/s)",
-      "Fill Speed (Gi/s)"])
+      "IssueSpeedMBps",
+      "FillSpeedGiBps"])
    return results
 
 def get_fio_stats(
@@ -466,7 +600,7 @@ def get_fio_stats(
    cpu_system = cpu_info_before_resilver.system
 
    # Gather write latency stats from the write_monitor process
-   # Latency presnted by FIO is an average over the full run. We need to calculate the average latency per sample
+   # Latency presented by FIO is an average over the full run. We need to calculate the average latency per sample
    out = write_monitor_handle.stdout.readline().strip().split(";")
    write_iops_mon = out[fio_key.index("write_iops")]
    write_bw_mon = out[fio_key.index("write_bw_mean_kb")]
@@ -671,7 +805,7 @@ def read_latency_monitor():
    proc = subprocess.Popen(shlex.split(cmd), stdout=subprocess.PIPE, text=True)
    return proc
 
-# Performs random writes with iodpeth of 1 to monitor read latency. Performes one I/O every 100ms
+# Performs random writes with iodpeth of 1 to monitor read latency. Performs one I/O every 100ms
 def write_latency_monitor():
    # Set up FIO command to perform small queue random reads
    cmd = """
@@ -754,7 +888,8 @@ def create_pool(layout,vdev_width,recordsize,minspares):
       zpool_create += layout + " " + vdev + " "
 
    # If there are any spares, add them to the zpool create string
-   if spares != "":
+   # If we're using draid, we don't need traditional hot spares
+   if spares != "" or "draid" not in layout:
       zpool_create += "spare " + spares
    else:
       zpool_create = zpool_create.strip()
@@ -802,7 +937,7 @@ def destroy_pool():
             log.info("Killed lingering fio processes.")
             time.sleep(1)
          except:
-            log.info("Cound not destroy pool or kill fio processes.")
+            log.info("Could not destroy pool or kill fio processes.")
             time.sleep(5)
       
    time_taken = time.time() - start
@@ -824,7 +959,7 @@ def fill_pool(fill_percent,frag_level):
    # Create a directory for the fill files
    subprocess.run("mkdir /mnt/tank/test/fill",shell=True)
    
-   # We will track the pool percent used as well as the run number duing the fill loop
+   # We will track the pool percent used as well as the run number during the fill loop
    percent_used = 0
    run_number = 0
 
@@ -906,7 +1041,7 @@ def fill_pool(fill_percent,frag_level):
          total_tib_str =  "{:.2f}".format(round((used+avail)/1024**4,2))
          percent_used_str = "{:.2f}".format(percent_used)
          rate_gibps_str = "{:.2f}".format(rate_gibps)
-         log.info(test_index + " Filling (frag @ " + frag_level + "): " + used_tib_str + "TiB/" + total_tib_str + "TiB >> " + percent_used_str + "% (" + rate_gibps_str + "Gi/s | ETA " + sec_to_dhms(time_left_sec) + ")")
+         log.info(test_index + " Filling pool to " + str(fill_percent) + "% (frag @ " + frag_level + "): " + used_tib_str + "TiB/" + total_tib_str + "TiB >> " + percent_used_str + "% (" + rate_gibps_str + "Gi/s | ETA " + sec_to_dhms(time_left_sec) + ")")
          
          # If pool is filled to the specified percentage, terminate the fill process and break the loop
          if percent_used >= fill_percent:
@@ -926,40 +1061,22 @@ def fill_pool(fill_percent,frag_level):
       start = time.time()
       log.info("Pruning " + str(prune_percent) + "% of files")
 
+      # Prune random files until the specified size is reached
+      for root, dirs, files in os.walk("/mnt/tank/test/fill/"):
+         for file in files:
+            if random.random() < prune_percent/100:
+               os.remove(os.path.join(root,file))
+
       # Get the current pool status and calculate the size to prune to achieve the specified fill percentage
       zfs_status = subprocess.check_output("zfs list tank/test -Hpo used,available",shell=True).decode("utf-8")
       used = int(zfs_status.split()[0])
       avail = int(zfs_status.split()[1])
       total = used + avail
-      prune_size = round(total * prune_percent/100,2)
-
-      # Adjust the target prune percentage to overshoot and terminate early (otherwise we may prune slightly too few files)
-      prune_percent += 5
-
-      # Get file count
-      file_count = int(subprocess.check_output("find /mnt/tank/test/fill/ -type f | wc -l",shell=True).decode("utf-8"))
-      file_count_to_prune = round(file_count * prune_percent/100)
-
-      # Prune random files until the specified size is reached
-      pruned_size_so_far = 0
-      pruned_count_so_far = 0
-      for root, dirs, files in os.walk("/mnt/tank/test/fill/"):
-         for file in files:
-            if random.random() < prune_percent/100:
-               pruned_size_so_far += os.path.getsize(os.path.join(root,file))
-               # Once we have pruned enough files to get down to the specified fill percentage, break the loop
-               if pruned_size_so_far >= prune_size:
-                  break
-               else:
-                  os.remove(os.path.join(root,file))
-                  pruned_count_so_far += 1
-                  pruned_percent = "{:.2f}".format(round(pruned_size_so_far/prune_size*100,2))
-                  if pruned_count_so_far % 100000 == 0:
-                     log.info(test_index + " Pruning " + str(prune_percent-5) + "% of " + str(round(file_count/1000000,2)) + "m files, " + pruned_percent + "% done...")
+      percent_used = round(used/total*100,2)
 
       # Calculate and log the time taken to prune the files
       time_taken = time.time() - start
-      log.info("Files pruned in " + sec_to_dhms(time_taken))
+      log.info("Files pruned in " + sec_to_dhms(time_taken) + ", pool at " + str(percent_used) + "% full")
 
    # Return the average fill speed
    return str(rate_gibps)
@@ -1051,6 +1168,46 @@ def get_resilver_status():
    # If the pool is healthy, return "healthy"
    else:
       return "healthy"
+
+# Returns the parity level of the vdev configuration
+def get_parity_level(vdev_type, vdev_width):
+   if vdev_type == "draid1": parity_level = 1
+   if vdev_type == "draid2": parity_level = 2
+   if vdev_type == "draid3": parity_level = 3
+   if vdev_type == "raidz1": parity_level = 1
+   if vdev_type == "raidz2": parity_level = 2
+   if vdev_type == "raidz3": parity_level = 3
+   if vdev_type == "mirror":
+      parity_level = vdev_width - 1
+   return parity_level
+
+def get_num_vdevs(vdev_type, vdev_width):
+   num_vdevs = math.floor(TOTAL_NUM_DISKS / vdev_width)
+   
+   if vdev_type == "mirror" and vdev_width == 2:
+      num_vdevs -= 1
+   
+   return num_vdevs
+
+# Returns the AFR of the pool based on the vdev configuration and AFR of the individual disks
+def get_pool_afr(vdev_width, parity_level, num_vdevs, disk_AFR, resilver_time_sec):
+   # Generate probability matrix
+   diskP = []
+   for i in range(0, parity_level + 1):
+      if i == 0:
+         diskP.append(disk_AFR)
+      else:
+         diskP.append(disk_AFR * resilver_time_sec * i / (365 * 24 * 60 * 60))
+
+   # Calculate the probability of 1, then 2, then ..., then p+1 disk failures (just enough to kill the vdev)
+   pool_P = 1
+
+   for num_disk_failures in range(1,parity_level + 2):
+      p = diskP[num_disk_failures - 1]
+      p_fail = (vdev_width - (num_disk_failures - 1)) * p
+      pool_P *= p_fail
+
+   return pool_P * num_vdevs
 
 # SIGINT and SIGTERM handler
 def kill(signum, frame):
