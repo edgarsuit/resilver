@@ -21,7 +21,7 @@ append_results = True        # Append results to existing output file instead of
 # starting_run can be used to resume testing from a specific run number
 # First value is the layout, second is the fragmentation level, third is the recordsize, and fourth is the test schedule
 # [0,0,0,0] starts from the beginning
-starting_test = [8, 0, 0, 0]
+starting_test = [14, 0, 0, 0]
 
 # Total number of disks in the pool
 TOTAL_NUM_DISKS = 82
@@ -64,24 +64,34 @@ layouts = [
    {"layout": "draid3:16d:41c:1s", "width": 41, "minspares": 0},    # 29
    {"layout": "draid3:8d:41c:1s",  "width": 41, "minspares": 0},    # 30
    {"layout": "draid3:4d:41c:1s",  "width": 41, "minspares": 0},    # 31
+   {"layout": "raidz1",            "width": 8,  "minspares": 0},    # 32
+   {"layout": "raidz1",            "width": 16, "minspares": 0},    # 33
+   {"layout": "raidz2",            "width": 8,  "minspares": 0},    # 34
+   {"layout": "raidz2",            "width": 16, "minspares": 0},    # 35
+   {"layout": "raidz3",            "width": 8,  "minspares": 0},    # 36
+   {"layout": "raidz3",            "width": 16, "minspares": 0},    # 37
+   {"layout": "draid1:64d:82c:2s", "width": 82, "minspares": 0},    # 38
+   {"layout": "draid2:64d:82c:2s", "width": 82, "minspares": 0},    # 39
+   {"layout": "draid3:64d:82c:2s", "width": 82, "minspares": 0},    # 40
+   
 
    # ORIGINAL LAYOUTS
-   {"layout": "draid2:32d:82c:2s", "width": 82, "minspares": 0},    # 32
-   {"layout": "draid2:16d:82c:2s", "width": 82, "minspares": 0},    # 33
-   {"layout": "draid2:8d:82c:2s",  "width": 82, "minspares": 0},    # 34
-   {"layout": "draid2:4d:82c:2s",  "width": 82, "minspares": 0},    # 35
-   {"layout": "draid2:32d:41c:1s", "width": 41, "minspares": 0},    # 36
-   {"layout": "draid2:16d:41c:1s", "width": 41, "minspares": 0},    # 37
-   {"layout": "draid2:8d:41c:1s",  "width": 41, "minspares": 0},    # 38
-   {"layout": "draid2:4d:41c:1s",  "width": 41, "minspares": 0},    # 39
-   {"layout": "raidz2",            "width": 40, "minspares": 0},    # 40
-   {"layout": "raidz2",            "width": 20, "minspares": 0},    # 41
-   {"layout": "raidz2",            "width": 10, "minspares": 0},    # 42
-   {"layout": "raidz2",            "width": 5,  "minspares": 0},    # 43
-   {"layout": "raidz3",            "width": 10, "minspares": 0},    # 44
-   {"layout": "raidz1",            "width": 10, "minspares": 0},    # 45
-   {"layout": "mirror",            "width": 2,  "minspares": 1},    # 46
-   {"layout": "mirror",            "width": 3,  "minspares": 1}     # 47  
+   {"layout": "draid2:32d:82c:2s", "width": 82, "minspares": 0},    # 41
+   {"layout": "draid2:16d:82c:2s", "width": 82, "minspares": 0},    # 42
+   {"layout": "draid2:8d:82c:2s",  "width": 82, "minspares": 0},    # 43
+   {"layout": "draid2:4d:82c:2s",  "width": 82, "minspares": 0},    # 44
+   {"layout": "draid2:32d:41c:1s", "width": 41, "minspares": 0},    # 45
+   {"layout": "draid2:16d:41c:1s", "width": 41, "minspares": 0},    # 46
+   {"layout": "draid2:8d:41c:1s",  "width": 41, "minspares": 0},    # 47
+   {"layout": "draid2:4d:41c:1s",  "width": 41, "minspares": 0},    # 48
+   {"layout": "raidz2",            "width": 40, "minspares": 0},    # 49
+   {"layout": "raidz2",            "width": 20, "minspares": 0},    # 50
+   {"layout": "raidz2",            "width": 10, "minspares": 0},    # 51
+   {"layout": "raidz2",            "width": 5,  "minspares": 0},    # 52
+   {"layout": "raidz3",            "width": 10, "minspares": 0},    # 53
+   {"layout": "raidz1",            "width": 10, "minspares": 0},    # 54
+   {"layout": "mirror",            "width": 2,  "minspares": 1},    # 55
+   {"layout": "mirror",            "width": 3,  "minspares": 1}     # 56  
 ]
 
 # Fragmentation levels to test on each configuration
@@ -192,7 +202,9 @@ def main():
 
    # Display total number of tests to run and starting test number
    total_tests = len(layouts) * len(frag_schedule) * len(recordsize_schedule) * len(test_schedule)
-   starting_test_number = starting_test[0]*len(frag_schedule)*len(recordsize_schedule)*len(test_schedule) + starting_test[1]*len(recordsize_schedule)*len(test_schedule) + starting_test[2]*len(test_schedule) + starting_test[3]
+   starting_test_number = starting_test[0]*len(frag_schedule)*len(recordsize_schedule)*len(test_schedule) + \
+      starting_test[1]*len(recordsize_schedule)*len(test_schedule) + \
+      starting_test[2]*len(test_schedule) + starting_test[3]
    log.info("Total tests to run: " + str(total_tests) + " | Starting test number: " + str(starting_test_number))
 
    # Format disks if needed; destroy pool (if exists) before formatting
@@ -250,8 +262,11 @@ def main():
                subprocess.check_output("zpool export tank",shell=True)
                subprocess.check_output("zpool import tank",shell=True)
 
-               test_number = layouts.index(layout)*len(frag_schedule)*len(recordsize_schedule)*len(test_schedule) + frag_schedule.index(frag)*len(recordsize_schedule)*len(test_schedule) + recordsize_schedule.index(recordsize)*len(test_schedule) + test_schedule.index(test)
-               test_index = "[" + str(layouts.index(layout)) + ", " + str(frag_schedule.index(frag)) + ", " + str(recordsize_schedule.index(recordsize)) + ", " + str(test_schedule.index(test)) + "]"
+               test_number = layouts.index(layout)*len(frag_schedule)*len(recordsize_schedule)*len(test_schedule) + \
+                  frag_schedule.index(frag)*len(recordsize_schedule)*len(test_schedule) + \
+                  recordsize_schedule.index(recordsize)*len(test_schedule) + test_schedule.index(test)
+               test_index = "[" + str(layouts.index(layout)) + ", " + str(frag_schedule.index(frag)) + ", " + \
+                  str(recordsize_schedule.index(recordsize)) + ", " + str(test_schedule.index(test)) + "]"
                # Log test index
                elapsed_time = sec_to_dhms(time.time() - overall_start_time)
                log.info("Starting test index " + test_index + " (" + str(test_number) + "/" + str(total_tests) + ") | Total runtime: " + elapsed_time)
@@ -1041,7 +1056,8 @@ def fill_pool(fill_percent,frag_level):
          total_tib_str =  "{:.2f}".format(round((used+avail)/1024**4,2))
          percent_used_str = "{:.2f}".format(percent_used)
          rate_gibps_str = "{:.2f}".format(rate_gibps)
-         log.info(test_index + " Filling pool to " + str(fill_percent) + "% (frag @ " + frag_level + "): " + used_tib_str + "TiB/" + total_tib_str + "TiB >> " + percent_used_str + "% (" + rate_gibps_str + "Gi/s | ETA " + sec_to_dhms(time_left_sec) + ")")
+         log.info(test_index + " Filling pool to " + str(fill_percent) + "% (frag @ " + frag_level + "): " + used_tib_str + \
+            "TiB/" + total_tib_str + "TiB >> " + percent_used_str + "% (" + rate_gibps_str + "Gi/s | ETA " + sec_to_dhms(time_left_sec) + ")")
          
          # If pool is filled to the specified percentage, terminate the fill process and break the loop
          if percent_used >= fill_percent:

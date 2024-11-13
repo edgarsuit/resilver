@@ -47,7 +47,7 @@ plot_3group <- function(df, datatype, ydata, group1, group2, group3, dashed_data
    } else if (group3 == "VdevWidth") {
       title3 <- "Vdev Width"
    } else if (group3 == "VdevType") {
-      title3 <- "RAID Type"
+      title3 <- "Vdev Type"
    }
 
    plot <- ggplot(medians, aes(x = !!sym(group1), y = median_sample, color = !!sym(group2), linetype = !!sym(group3))) +
@@ -70,7 +70,7 @@ plot_3group <- function(df, datatype, ydata, group1, group2, group3, dashed_data
 
    output_plot <- paste(ydata, "_by_", group1, "_", group2, "_", group3, ".png",sep = "")
 
-   ggsave(paste("plots/",output_plot, sep = ""), plot)
+   ggsave(paste("plots/",output_plot, sep = ""), plot, width = 10, height = 10, unit="in")
 }
 
 plot_2group <- function(df, datatype, ydata, group1, group2) {
@@ -107,8 +107,8 @@ plot_2group <- function(df, datatype, ydata, group1, group2) {
       title2 <- "Record Size"
    } else if (group2 == "VdevWidth") {
       title2 <- "Vdev Width"
-   } else if (group3 == "VdevType") {
-      title2 <- "RAID Type"
+   } else if (group2 == "VdevType") {
+      title2 <- "Vdev Type"
    }
 
    plot <- ggplot(medians, aes(x = !!sym(group1), y = median_sample, color = !!sym(group2))) +
@@ -127,7 +127,7 @@ plot_2group <- function(df, datatype, ydata, group1, group2) {
       plot <- plot + scale_y_continuous(labels = label_percent(scale = 100))
    }
 
-   ggsave(paste("plots/",output_plot, sep = ""), plot)
+   ggsave(paste("plots/",output_plot, sep = ""), plot, width = 10, height = 10, unit="in")
 }
 
 plot_3group_set <- function(df, datatype, ydata, group1, group3, dashed_data, solid_data) {
@@ -166,7 +166,7 @@ plot_3group_set <- function(df, datatype, ydata, group1, group3, dashed_data, so
 pool_afr_labeller <- function(variable, value) {
    sapply(value, function(x) {
       afr_value <- str_extract(x, "\\d+")
-      paste(afr_value, "% Disk AFR")
+      paste(afr_value, "% Disk AFR", sep = "")
    })
 }
 
@@ -199,7 +199,7 @@ AFR_plots_by_fragstress <- function(frag, stress, draid_vdevwidth) {
       geom_line() +
       scale_linetype_manual(values = c("dRAID2" = "dashed", "raidz2" = "solid")) +
       coord_cartesian(ylim = c(0, 0.02)) +
-      facet_wrap(~ PoolAFR, scales = "free_y", labeller = labeller(PoolAFR = pool_afr_labeller)) +
+      facet_wrap(~ PoolAFR, scales = "free_y", labeller = pool_afr_labeller) +
       scale_y_continuous(labels = label_percent(scale = 100)) +
       labs(title = paste("dRAID2 and RAIDZ2 Pool AFR by Effective Width", " (", frag_label, " Frag, ", stress_label, " Stress) ", draid_vdevwidth, "-wide dRAID vdevs",  sep = ""),
          subtitle = "Effective Width: RAIDZ2 = vdev width; dRAID2 = data disks + parity level",
@@ -208,14 +208,14 @@ AFR_plots_by_fragstress <- function(frag, stress, draid_vdevwidth) {
       theme_light() +
       theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5))
 
-   ggsave(paste("plots/PoolAFR_EffectiveWidth_",frag_label,"Frag_", stress_label, "Stress", draid_vdevwidth, "widedRAID.png", sep = ""), plot = plot)
+   ggsave(paste("plots/PoolAFR_EffectiveWidth_",frag_label,"Frag_", stress_label, "Stress", draid_vdevwidth, "widedRAID.png", sep = ""), plot = plot, width = 10, height = 10, unit="in")
 
    # Create the plot, grouping by the median value
    plot <- ggplot(afr_pivot, aes(x = PoolSizeTiB, y = Percent100x, color = PoolAFR, linetype = VdevType)) +
       geom_line() +
       scale_linetype_manual(values = c("dRAID2" = "dashed", "raidz2" = "solid")) +
       coord_cartesian(ylim = c(0, 0.02)) +
-      facet_wrap(~ PoolAFR, scales = "free_y", labeller = labeller(PoolAFR = pool_afr_labeller)) +
+      facet_wrap(~ PoolAFR, scales = "free_y", labeller = pool_afr_labeller) +
       scale_y_continuous(labels = label_percent(scale = 100)) +
       labs(title = paste("dRAID2 and RAIDZ2 Pool AFR by Usable Capaicity (" , frag_label, " Frag, ", stress_label, " Stress) ", draid_vdevwidth, "-wide dRAID vdevs", sep = ""),
          x = "Usable Capacity (TiB)",
@@ -223,7 +223,7 @@ AFR_plots_by_fragstress <- function(frag, stress, draid_vdevwidth) {
       theme_light() +
       theme(plot.title = element_text(hjust = 0.5))
 
-   ggsave(paste("plots/PoolAFR_UsableCap_",frag_label,"Frag_", stress_label, "Stress_", draid_vdevwidth, "widedRAID.png", sep = ""), plot = plot)
+   ggsave(paste("plots/PoolAFR_UsableCap_",frag_label,"Frag_", stress_label, "Stress_", draid_vdevwidth, "widedRAID.png", sep = ""), plot = plot, width = 10, height = 10, unit="in")
 }
 
 AFR_plots_by_draid_width <- function(frag, stress) {
@@ -257,7 +257,7 @@ AFR_plots_by_draid_width <- function(frag, stress) {
       geom_line() +
       scale_linetype_manual(values = c("41" = "dashed", "82" = "solid")) +
       coord_cartesian(ylim = c(0, 0.02)) +
-      facet_wrap(~ PoolAFR, scales = "free_y", labeller = labeller(PoolAFR = pool_afr_labeller)) +
+      facet_wrap(~ PoolAFR, scales = "free_y", labeller = pool_afr_labeller) +
       scale_y_continuous(labels = label_percent(scale = 100)) +
       labs(title = paste("dRAID2 Pool AFR by Vdev Width and dRAID Data Disk Qty.", " (", frag_label, " Frag, ", stress_label, " Stress)", sep = ""),
          x = "dRAID Data Disks",
@@ -265,5 +265,5 @@ AFR_plots_by_draid_width <- function(frag, stress) {
       theme_light() +
       theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5))
 
-   ggsave(paste("plots/dRAIDPoolAFR_VdevWidth_",frag_label,"Frag_", stress_label, "Stress.png", sep = ""), plot = plot)
+   ggsave(paste("plots/dRAIDPoolAFR_VdevWidth_",frag_label,"Frag_", stress_label, "Stress.png", sep = ""), plot = plot, width = 10, height = 10, unit="in")
 }
