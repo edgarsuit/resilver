@@ -6,6 +6,7 @@
 # Outputs results to a CSV file
 # Uses pool name "tank" and dataset name "test"
 # Uses FIO for CPU and disk stress as well as pool fill
+# The ZFS layouts to test are defined in external file "layouts"
 
 import subprocess, shlex, math, time, os, random, csv, signal, sys, logging, psutil, shutil
 
@@ -13,7 +14,7 @@ fill_percent = 70             # Target pool fill percent for all tests
 physical_disk_size = "7.3T"   # Size of physical disks
 format_disks = True           # Format disks before creating pool
 format_size = "100G"          # Size to format disks to
-target_disk = "sdaa"          # Disk to offline/online during testing
+target_disk = "sda"           # Disk to offline/online during testing
 results_file = "output.csv"   # Output file name
 log_file = "resilver.log"     # Log file name
 append_results = True        # Append results to existing output file instead of creating a new one
@@ -21,78 +22,10 @@ append_results = True        # Append results to existing output file instead of
 # starting_run can be used to resume testing from a specific run number
 # First value is the layout, second is the fragmentation level, third is the recordsize, and fourth is the test schedule
 # [0,0,0,0] starts from the beginning
-starting_test = [14, 0, 0, 0]
+starting_test = [15, 2, 0, 4]
 
 # Total number of disks in the pool
 TOTAL_NUM_DISKS = 82
-
-# ZFS layouts to test
-# layout: ZFS layout
-# width: vdev width
-# minspares: Minimum number of spares in the vdev
-layouts = [
-   # SECOND RUN LAYOUTS
-   {"layout": "draid1:32d:82c:2s", "width": 82, "minspares": 0},    # 0
-   {"layout": "draid1:16d:82c:2s", "width": 82, "minspares": 0},    # 1
-   {"layout": "draid1:8d:82c:2s",  "width": 82, "minspares": 0},    # 2
-   {"layout": "draid1:4d:82c:2s",  "width": 82, "minspares": 0},    # 3
-   {"layout": "draid3:32d:82c:2s", "width": 82, "minspares": 0},    # 4
-   {"layout": "draid3:16d:82c:2s", "width": 82, "minspares": 0},    # 5
-   {"layout": "draid3:8d:82c:2s",  "width": 82, "minspares": 0},    # 6
-   {"layout": "draid3:4d:82c:2s",  "width": 82, "minspares": 0},    # 7
-   {"layout": "raidz2",            "width": 15, "minspares": 0},    # 8
-   {"layout": "raidz2",            "width": 25, "minspares": 0},    # 9
-   {"layout": "raidz2",            "width": 30, "minspares": 0},    # 10
-   {"layout": "raidz2",            "width": 35, "minspares": 0},    # 11
-   {"layout": "raidz2",            "width": 45, "minspares": 0},    # 12
-   {"layout": "raidz2",            "width": 50, "minspares": 0},    # 13
-   {"layout": "raidz1",            "width": 5,  "minspares": 0},    # 14
-   {"layout": "raidz1",            "width": 20, "minspares": 0},    # 15
-   {"layout": "raidz1",            "width": 30, "minspares": 0},    # 16
-   {"layout": "raidz1",            "width": 40, "minspares": 0},    # 17
-   {"layout": "raidz1",            "width": 50, "minspares": 0},    # 18
-   {"layout": "raidz3",            "width": 5,  "minspares": 0},    # 19
-   {"layout": "raidz3",            "width": 20, "minspares": 0},    # 20
-   {"layout": "raidz3",            "width": 30, "minspares": 0},    # 21
-   {"layout": "raidz3",            "width": 40, "minspares": 0},    # 22
-   {"layout": "raidz3",            "width": 50, "minspares": 0},    # 23
-   {"layout": "draid1:32d:41c:1s", "width": 41, "minspares": 0},    # 24
-   {"layout": "draid1:16d:41c:1s", "width": 41, "minspares": 0},    # 25
-   {"layout": "draid1:8d:41c:1s",  "width": 41, "minspares": 0},    # 26
-   {"layout": "draid1:4d:41c:1s",  "width": 41, "minspares": 0},    # 27
-   {"layout": "draid3:32d:41c:1s", "width": 41, "minspares": 0},    # 28
-   {"layout": "draid3:16d:41c:1s", "width": 41, "minspares": 0},    # 29
-   {"layout": "draid3:8d:41c:1s",  "width": 41, "minspares": 0},    # 30
-   {"layout": "draid3:4d:41c:1s",  "width": 41, "minspares": 0},    # 31
-   {"layout": "raidz1",            "width": 8,  "minspares": 0},    # 32
-   {"layout": "raidz1",            "width": 16, "minspares": 0},    # 33
-   {"layout": "raidz2",            "width": 8,  "minspares": 0},    # 34
-   {"layout": "raidz2",            "width": 16, "minspares": 0},    # 35
-   {"layout": "raidz3",            "width": 8,  "minspares": 0},    # 36
-   {"layout": "raidz3",            "width": 16, "minspares": 0},    # 37
-   {"layout": "draid1:64d:82c:2s", "width": 82, "minspares": 0},    # 38
-   {"layout": "draid2:64d:82c:2s", "width": 82, "minspares": 0},    # 39
-   {"layout": "draid3:64d:82c:2s", "width": 82, "minspares": 0},    # 40
-   
-
-   # ORIGINAL LAYOUTS
-   {"layout": "draid2:32d:82c:2s", "width": 82, "minspares": 0},    # 41
-   {"layout": "draid2:16d:82c:2s", "width": 82, "minspares": 0},    # 42
-   {"layout": "draid2:8d:82c:2s",  "width": 82, "minspares": 0},    # 43
-   {"layout": "draid2:4d:82c:2s",  "width": 82, "minspares": 0},    # 44
-   {"layout": "draid2:32d:41c:1s", "width": 41, "minspares": 0},    # 45
-   {"layout": "draid2:16d:41c:1s", "width": 41, "minspares": 0},    # 46
-   {"layout": "draid2:8d:41c:1s",  "width": 41, "minspares": 0},    # 47
-   {"layout": "draid2:4d:41c:1s",  "width": 41, "minspares": 0},    # 48
-   {"layout": "raidz2",            "width": 40, "minspares": 0},    # 49
-   {"layout": "raidz2",            "width": 20, "minspares": 0},    # 50
-   {"layout": "raidz2",            "width": 10, "minspares": 0},    # 51
-   {"layout": "raidz2",            "width": 5,  "minspares": 0},    # 52
-   {"layout": "raidz3",            "width": 10, "minspares": 0},    # 53
-   {"layout": "raidz1",            "width": 10, "minspares": 0},    # 54
-   {"layout": "mirror",            "width": 2,  "minspares": 1},    # 55
-   {"layout": "mirror",            "width": 3,  "minspares": 1}     # 56  
-]
 
 # Fragmentation levels to test on each configuration
 frag_schedule = [
@@ -200,6 +133,10 @@ def main():
       else:
          pass
 
+   # Get the layouts to test from the external file
+   layouts = get_layouts()
+   layout_index = starting_test[0]
+
    # Display total number of tests to run and starting test number
    total_tests = len(layouts) * len(frag_schedule) * len(recordsize_schedule) * len(test_schedule)
    starting_test_number = starting_test[0]*len(frag_schedule)*len(recordsize_schedule)*len(test_schedule) + \
@@ -219,7 +156,12 @@ def main():
       pass
 
    # Iterate through layouts
-   for layout in layouts[starting_test[0]:]:
+   while layout_index < len(layouts):
+      # Refresh layouts list
+      layouts = get_layouts()
+      layout = layouts[layout_index]
+      layout_index += 1
+
       log.info("Starting layout: " + layout["layout"])
       
       # Iterate through fragmentation levels
@@ -251,14 +193,18 @@ def main():
             pool_size_tib = round(pool_size/1024**4,2)
             frag_percent = subprocess.check_output("zpool list -Hpo frag tank",shell=True).decode("utf-8").strip()
 
-            log.info("Sleeping 10 seconds to let fio clear...")
-            time.sleep(10)
-
             # Once pool is filled with appropriate fragmentation level, iterate through tests
             for test in test_schedule[starting_test[3]:]:
 
                # Before starting the tests, export and import the pool to clear ARC data
                log.info("Exporting and importing pool to clear ARC...")
+               
+               # Kill old instances of fio before exporting the pool
+               try:
+                  subprocess.check_output("pkill -9  fio",shell=True)
+               except:
+                  pass
+               time.sleep(5)
                subprocess.check_output("zpool export tank",shell=True)
                subprocess.check_output("zpool import tank",shell=True)
 
@@ -908,9 +854,16 @@ def create_pool(layout,vdev_width,recordsize,minspares):
       zpool_create += "spare " + spares
    else:
       zpool_create = zpool_create.strip()
+
+   if "draid" in layout:
+      layout_description = layout
+   elif "raidz" in layout:
+      layout_description = str(vdev_width) + "-wide " + layout
+   elif "mirror" in layout:
+      layout_description = str(vdev_width) + "-way mirror"
    
    # Create the pool
-   log.info("Creating pool/dataset with layout: " + layout + " and recordsize: " + recordsize + "...")
+   log.info("Creating pool/dataset: " + layout_description + " and recordsize: " + recordsize + "...")
    subprocess.check_output(shlex.split(zpool_create))
    
    # Create a dataset with the specified recordsize and disable compression
@@ -1224,6 +1177,36 @@ def get_pool_afr(vdev_width, parity_level, num_vdevs, disk_AFR, resilver_time_se
       pool_P *= p_fail
 
    return pool_P * num_vdevs
+
+# Gets the layouts to be tested from the layouts file
+# Adds the layout index to the end of each line of the layout file
+def get_layouts():
+   layouts = []
+
+   with open('layouts', 'r') as file:
+      lines = file.readlines()
+      for line in lines:
+         stripped_line = line.strip()
+         # Skip blank lines and comment lines
+         if stripped_line and not stripped_line.startswith("#"):
+            layouts.append(eval(stripped_line.split("#")[0].strip()))
+
+   with open('layouts', 'w') as file:
+      layout_index = 0
+      for line in lines:
+         stripped_line = line.strip()
+         # Skip blank lines and comment lines
+         if stripped_line and not stripped_line.startswith("#"):
+            # Add layout index to end of line if it doesn't already exist
+            if "#" not in stripped_line or not stripped_line.endswith(f"# {layout_index}"):
+               file.write(f"{stripped_line.split('#')[0].strip()}  # {layout_index}\n")
+            else:
+               file.write(line)
+            layout_index += 1
+         else:
+            file.write(line)
+   
+   return layouts
 
 # SIGINT and SIGTERM handler
 def kill(signum, frame):

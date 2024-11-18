@@ -4,15 +4,18 @@ red <- "#E06666"
 yellow <- "#FFD966"
 green <- "#93C47D"
 
-resilver_results <- read.csv("firstrun.csv")
+resilver_results_old <- read.csv("firstrun.csv")
+resilver_results_new <- read.csv("output.csv")
+names(resilver_results_old) <- names(resilver_results_new)
+resilver_results <- rbind(resilver_results_old, resilver_results_new)
 
-raidz2 <- resilver_results %>% filter(VdevType == "raidz2")
-raidz <- resilver_results %>% filter(VdevType == "raidz1" | VdevType == "raidz2" | VdevType == "raidz3")
+raidz2 <- resilver_results %>% filter(VdevType == "raidz2" & NumHotSpares == 2)
+raidz <- resilver_results %>% filter((VdevType == "raidz1" | VdevType == "raidz2" | VdevType == "raidz3") & NumHotSpares == 2)
 
 plot_3group_set(
    raidz2,
    "RAIDZ2",
-   "ResilverTimeMin",
+   "ResilverTimeMinutes",
    "VdevWidth",
    "RecordSize",
    "128k",
@@ -22,7 +25,7 @@ plot_3group_set(
 plot_2group(
    raidz2,
    "RAIDZ2",
-   "ResilverTimeMin",
+   "ResilverTimeMinutes",
    "VdevWidth",
    "RecordSize"
 )
@@ -30,7 +33,7 @@ plot_2group(
 plot_2group(
    raidz,
    "RAIDZ",
-   "ResilverTimeMin",
+   "ResilverTimeMinutes",
    "VdevWidth",
    "VdevType"
 )
@@ -38,7 +41,7 @@ plot_2group(
 plot_2group(
    raidz,
    "RAIDZ",
-   "ResilverTimeMin",
+   "ResilverTimeMinutes",
    "PoolSizeTiB",
    "VdevType"
 )
@@ -58,7 +61,7 @@ draid <- resilver_results %>% filter(VdevWidth == 82 & RecordSize == "1M" & (Vde
 plot_2group(
    draid,
    "dRAID",
-   "ResilverTimeMin",
+   "ResilverTimeMinutes",
    "dRAIDDataDisks",
    "VdevType"
 )
@@ -68,7 +71,7 @@ draid2 <- resilver_results %>% filter(VdevType == "draid2")
 plot_3group_set(
    draid2,
    "dRAID2",
-   "ResilverTimeMin",
+   "ResilverTimeMinutes",
    "dRAIDDataDisks",
    "VdevWidth",
    "41",
@@ -80,7 +83,7 @@ draid3 <- resilver_results %>% filter(VdevType == "draid3")
 plot_3group_set(
    draid3,
    "dRAID3",
-   "ResilverTimeMin",
+   "ResilverTimeMinutes",
    "dRAIDDataDisks",
    "VdevWidth",
    "41",
@@ -92,7 +95,7 @@ draid1 <- resilver_results %>% filter(VdevType == "draid1")
 plot_3group_set(
    draid1,
    "dRAID1",
-   "ResilverTimeMin",
+   "ResilverTimeMinutes",
    "dRAIDDataDisks",
    "VdevWidth",
    "41",
@@ -114,7 +117,7 @@ for (i in 1:10) {
 plot_2group(
    draid2,
    "dRAID2",
-   "ResilverTimeMin",
+   "ResilverTimeMinutes",
    "dRAIDDataDisks",
    "VdevWidth"
 )
@@ -139,7 +142,7 @@ draid_raidz2 <- draid_raidz2 %>% filter(!(VdevType == "draid2" & VdevWidth == 41
 plot_3group_set(
    draid_raidz2,
    "dRAID & RAIDZ",
-   "ResilverTimeMin",
+   "ResilverTimeMinutes",
    "EffectiveWidth",
    "VdevType",
    "dRAID2",
@@ -147,6 +150,7 @@ plot_3group_set(
 )
 
 for (i in 1:10) {
+   print(i)
    plot_3group_set(
       draid_raidz2,
       "dRAID & RAIDZ",
@@ -159,6 +163,7 @@ for (i in 1:10) {
 }
 
 for (i in 1:10) {
+   print(i)
    plot_3group_set(
       draid_raidz2,
       "dRAID & RAIDZ",
@@ -172,6 +177,9 @@ for (i in 1:10) {
 
 frag_array <- c("None", "Med", "High")
 stress_array <- c("None", "Med", "High")
+
+frag_array <- c("None")
+stress_array <- c("None")
 
 for (frag in frag_array) {
    for (stress in stress_array) {

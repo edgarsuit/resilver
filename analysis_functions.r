@@ -12,7 +12,7 @@ plot_3group <- function(df, datatype, ydata, group1, group2, group3, dashed_data
    medians[[group1]] <- as.double(medians[[group1]])
    medians[[group3]] <- as.character(medians[[group3]])
 
-   if (ydata == "ResilverTimeMin") {
+   if (ydata == "ResilverTimeMinutes") {
       ytitle <- paste("Median ", datatype, " Resilver Time", sep = "")
       yaxislabel <- "Median Resilver Time (Minutes)"
    } else if (grepl("PoolAFR", ydata)) {
@@ -81,7 +81,7 @@ plot_2group <- function(df, datatype, ydata, group1, group2) {
    medians[[group1]] <- as.double(medians[[group1]])
    medians[[group2]] <- as.character(medians[[group2]])
 
-   if (ydata == "ResilverTimeMin") {
+   if (ydata == "ResilverTimeMinutes") {
       ytitle <- paste("Median ", datatype, " Resilver Time", sep = "")
       yaxislabel <- "Median Resilver Time (Minutes)"
    } else if (grepl("PoolAFR", ydata)) {
@@ -163,11 +163,9 @@ plot_3group_set <- function(df, datatype, ydata, group1, group3, dashed_data, so
    )
 }
 
-pool_afr_labeller <- function(variable, value) {
-   sapply(value, function(x) {
-      afr_value <- str_extract(x, "\\d+")
-      paste(afr_value, "% Disk AFR", sep = "")
-   })
+pool_afr_labeller <- function(PoolAFR) {
+   afr_value <- str_extract(PoolAFR, "\\d+")
+   paste(afr_value, "% Disk AFR", sep = "")
 }
 
 AFR_plots_by_fragstress <- function(frag, stress, draid_vdevwidth) {
@@ -184,8 +182,9 @@ AFR_plots_by_fragstress <- function(frag, stress, draid_vdevwidth) {
       stress_label <- stress
    }
 
-   AFR_data <- resilver_results %>% filter(VdevType == "dRAID2" | VdevType == "raidz2")
-   AFR_data <- AFR_data %>% filter(!(VdevType == "dRAID2" & VdevWidth == draid_vdevwidth))
+   AFR_data <- resilver_results %>% filter(VdevType == "draid2" | VdevType == "raidz2")
+   AFR_data <- AFR_data %>% filter(!(VdevType == "raidz2" & NumHotSpares > 2))
+   AFR_data <- AFR_data %>% filter(!(VdevType == "draid2" & VdevWidth == draid_vdevwidth))
    AFR_data <- AFR_data %>% filter(RecordSize == "1M")
    AFR_data <- AFR_data %>% filter(FragLevel == tolower(frag) & DiskStress == tolower(stress) & CPUStress == tolower(stress))
    
@@ -240,7 +239,7 @@ AFR_plots_by_draid_width <- function(frag, stress) {
       stress_label <- stress
    }
 
-   AFR_data <- resilver_results %>% filter(VdevType == "dRAID2")
+   AFR_data <- resilver_results %>% filter(VdevType == "draid2")
    AFR_data <- AFR_data %>% filter(RecordSize == "1M")
    AFR_data <- AFR_data %>% filter(FragLevel == tolower(frag) & DiskStress == tolower(stress) & CPUStress == tolower(stress))
    
