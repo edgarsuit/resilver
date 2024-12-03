@@ -22,7 +22,7 @@ append_results = True        # Append results to existing output file instead of
 # starting_run can be used to resume testing from a specific run number
 # First value is the layout, second is the fragmentation level, third is the recordsize, and fourth is the test schedule
 # [0,0,0,0] starts from the beginning
-starting_test = [15, 2, 0, 4]
+starting_test = [0, 0, 0, 0]
 
 # Total number of disks in the pool
 TOTAL_NUM_DISKS = 82
@@ -145,7 +145,7 @@ def main():
    log.info("Total tests to run: " + str(total_tests) + " | Starting test number: " + str(starting_test_number))
 
    # Format disks if needed; destroy pool (if exists) before formatting
-   if format_disks == True:
+   if format_disks:
       destroy_pool()
       format(format_size)
 

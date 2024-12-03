@@ -46,6 +46,27 @@ plot_2group(
    "VdevType"
 )
 
+raidz <- raidz %>% filter(CPUStress == "high")
+
+plot_2group(
+   raidz,
+   "RAIDZ",
+   "ResilverTimeMinutes",
+   "PoolSizeTiB",
+   "VdevType"
+)
+
+plot_3group_set(
+   raidz,
+   "RAIDZ",
+   "ResilverTimeMinutes",
+   "VdevWidth",
+   "VdevType",
+   "raidz1",
+   "raidz2",
+   "raidz3"
+)
+
 for (i in 1:10) {
    plot_2group(
       raidz2,
@@ -64,6 +85,17 @@ plot_2group(
    "ResilverTimeMinutes",
    "dRAIDDataDisks",
    "VdevType"
+)
+
+plot_3group_set(
+   draid,
+   "dRAID",
+   "ResilverTimeMinutes",
+   "dRAIDDataDisks",
+   "VdevType",
+   "draid1",
+   "draid2",
+   "draid3"
 )
 
 draid2 <- resilver_results %>% filter(VdevType == "draid2")

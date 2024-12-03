@@ -4,7 +4,7 @@ library(ggplot2)
 library(scales)
 library(stringr)
 
-plot_3group <- function(df, datatype, ydata, group1, group2, group3, dashed_data, solid_data) {
+plot_3group <- function(df, datatype, ydata, group1, group2, group3, dashed_data, solid_data, dotted_data) {
    medians <- df %>%
       group_by(!!sym(group1), !!sym(group2), !!sym(group3)) %>%
       summarize(median_sample = median(!!sym(ydata)))
@@ -54,7 +54,6 @@ plot_3group <- function(df, datatype, ydata, group1, group2, group3, dashed_data
       geom_point() +
       geom_line() +
       scale_color_manual(values = c("high" = red, "med" = yellow, "none" = green)) +
-      scale_linetype_manual(values = setNames(c("dashed", "solid"), c(dashed_data, solid_data))) +
       labs(title = paste(ytitle," vs. ", title1, sep = ""),
          subtitle = paste("by ", title2, " and ", title3, sep = ""),
          x = title1,
@@ -63,6 +62,12 @@ plot_3group <- function(df, datatype, ydata, group1, group2, group3, dashed_data
          linetype = title3) +
       theme_light() + 
       theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5))
+   
+   if (missing(dotted_data)) {
+      plot <- plot + scale_linetype_manual(values = setNames(c("dashed", "solid"), c(dashed_data, solid_data)))
+   } else {
+      plot <- plot + scale_linetype_manual(values = setNames(c("dashed", "solid", "dotted"), c(dashed_data, solid_data, dotted_data)))
+   }
 
    if (grepl("PoolAFR", ydata)) {
       plot <- plot + scale_y_continuous(labels = label_percent(scale = 100))
@@ -115,11 +120,12 @@ plot_2group <- function(df, datatype, ydata, group1, group2) {
       geom_point() +
       geom_line() +
       labs(title = paste(ytitle," vs. ", title1," by ", title2, sep = ""),
+         subtitle = "High CPU Stress",
          x = title1,
          y = yaxislabel,
          color = title2) +
       theme_light() + 
-      theme(plot.title = element_text(hjust = 0.5))
+      theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5))
 
    output_plot <- paste(ydata, "_by_", group1, "_", group2, ".png",sep = "")
 
@@ -130,7 +136,7 @@ plot_2group <- function(df, datatype, ydata, group1, group2) {
    ggsave(paste("plots/",output_plot, sep = ""), plot, width = 10, height = 10, unit="in")
 }
 
-plot_3group_set <- function(df, datatype, ydata, group1, group3, dashed_data, solid_data) {
+plot_3group_set <- function(df, datatype, ydata, group1, group3, dashed_data, solid_data, dotted_data) {
    plot_3group(
       df,
       datatype,
@@ -139,7 +145,8 @@ plot_3group_set <- function(df, datatype, ydata, group1, group3, dashed_data, so
       "FragLevel",
       group3,
       dashed_data,
-      solid_data
+      solid_data,
+      dotted_data
    )
    plot_3group(
       df,
@@ -149,7 +156,8 @@ plot_3group_set <- function(df, datatype, ydata, group1, group3, dashed_data, so
       "DiskStress",
       group3,
       dashed_data,
-      solid_data
+      solid_data,
+      dotted_data
    )
    plot_3group(
       df,
@@ -159,7 +167,8 @@ plot_3group_set <- function(df, datatype, ydata, group1, group3, dashed_data, so
       "CPUStress",
       group3,
       dashed_data,
-      solid_data
+      solid_data,
+      dotted_data
    )
 }
 
