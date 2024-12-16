@@ -166,19 +166,76 @@ for (i in 1:10) {
 
 # Add a column to the data frame called "EffectiveWidth", if VdevType="dRAID2" then it is dRAIDDataDisks + ParityLevel, if VdevType="raidz2" then it is VdevWidth
 resilver_results <- resilver_results %>%
-   mutate(EffectiveWidth = ifelse(VdevType == "draid2", as.integer(dRAIDDataDisks) + ParityLevel, VdevWidth))
+   mutate(EffectiveWidth = ifelse((VdevType == "draid1" | VdevType == "draid2" | VdevType == "draid3"), as.integer(dRAIDDataDisks) + ParityLevel, VdevWidth))
 
-draid_raidz2 <- resilver_results %>% filter(RecordSize == "1M" & (VdevType == "draid2" | VdevType == "raidz2"))
-draid_raidz2 <- draid_raidz2 %>% filter(!(VdevType == "draid2" & VdevWidth == 41))
+draid_raidz <- resilver_results %>% filter(RecordSize == "1M" & (VdevType == "draid1" | VdevType == "draid2" | VdevType == "draid3" | ((VdevType == "raidz1" | VdevType == "raidz2" | VdevType == "raidz3") & NumHotSpares == 2)))
+draid_raidz <- draid_raidz %>% filter(!(VdevType == "draid2" & VdevWidth == 41))
+
+draid_raidz <- draid_raidz %>%
+   mutate(RAIDType = ifelse((VdevType == "draid1" | VdevType == "draid2" | VdevType == "draid3"), "draid", "raidz"))
+
+
+
+df
+datatype
+ydata
+group1
+group2
+group3
+dashed_data
+solid_data
+dotted_data
+
+
+plot_3group(
+   draid_raidz,
+   "dRAID & RAIDZ",
+   "ResilverTimeMinutes",
+   "EffectiveWidth",
+   "ParityLevel",
+   "RAIDType",
+   "raidz",
+   "draid"
+)
+
+for (i in 1:10) {
+   print(i)
+   plot_3group(
+      draid_raidz,
+      "dRAID & RAIDZ",
+      paste("PoolAFR",i,"percent100x", sep=""),
+      "EffectiveWidth",
+      "ParityLevel",
+      "RAIDType",
+      "raidz",
+      "draid"
+   )
+}
+
+draid_raidz <- draid_raidz %>% filter(VdevType == "draid3" | VdevType == "raidz2")
+
+for (i in 1:10) {
+   print(i)
+   plot_3group(
+      draid_raidz,
+      "dRAID & RAIDZ",
+      paste("PoolAFR",i,"percent100x", sep=""),
+      "EffectiveWidth",
+      "ParityLevel",
+      "RAIDType",
+      "raidz",
+      "draid"
+   )
+}
 
 plot_3group_set(
-   draid_raidz2,
+   draid_raidz,
    "dRAID & RAIDZ",
    "ResilverTimeMinutes",
    "EffectiveWidth",
    "VdevType",
    "dRAID2",
-   "raidz2"
+   "raidz"
 )
 
 for (i in 1:10) {

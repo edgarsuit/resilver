@@ -22,7 +22,7 @@ append_results = True        # Append results to existing output file instead of
 # starting_run can be used to resume testing from a specific run number
 # First value is the layout, second is the fragmentation level, third is the recordsize, and fourth is the test schedule
 # [0,0,0,0] starts from the beginning
-starting_test = [0, 0, 0, 0]
+starting_test = [54, 0, 0, 0]
 
 # Total number of disks in the pool
 TOTAL_NUM_DISKS = 82
@@ -628,6 +628,10 @@ def get_disk_list():
       disk_size = disk.split()[1]
       if disk_size == physical_disk_size:
          disk_list.append("/dev/" + dev_node)
+
+   # Put target disk at the end of the list so it doesn't end up as a hot spare
+   disk_list.remove("/dev/" + target_disk)
+   disk_list.append("/dev/" + target_disk)
 
    return(disk_list)
 

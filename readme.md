@@ -18,7 +18,7 @@ Generates a summary CSV file with statistics from each resilver. General stats g
 
 This CSV file also notes the test conditions for each resilver (i.e., CPU stress test level, disk stress test level, and target pool fragmentation level).
 
-Also generates one CSV per resilver containing CPU and disk utilization stats sampled on 5 second intervals. Collection of these stats start ~30 second before the resilver is started to gather a rough baseline. CPU and disk stats gathered during each run:
+Also generates one CSV per resilver containing CPU and disk utilization stats sampled on 5 second intervals. Collection of these stats start 60 second before the resilver is started to gather a rough baseline. CPU and disk stats gathered during each run:
 * Write IOPS from an fio monitor function
 * Write bandwidth from an fio monitor function
 * Write latency from an fio monitor function

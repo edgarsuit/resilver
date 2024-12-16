@@ -10,6 +10,7 @@ plot_3group <- function(df, datatype, ydata, group1, group2, group3, dashed_data
       summarize(median_sample = median(!!sym(ydata)))
 
    medians[[group1]] <- as.double(medians[[group1]])
+   medians[[group2]] <- as.character(medians[[group2]])
    medians[[group3]] <- as.character(medians[[group3]])
 
    if (ydata == "ResilverTimeMinutes") {
@@ -40,6 +41,8 @@ plot_3group <- function(df, datatype, ydata, group1, group2, group3, dashed_data
       title2 <- "CPU Stress"
    } else if (group2 == "DiskStress") {
       title2 <- "Disk Stress"
+   } else if (group2 == "ParityLevel") {
+      title2 <- "Parity Level"
    }
 
    if (group3 == "RecordSize") {
@@ -48,12 +51,14 @@ plot_3group <- function(df, datatype, ydata, group1, group2, group3, dashed_data
       title3 <- "Vdev Width"
    } else if (group3 == "VdevType") {
       title3 <- "Vdev Type"
+   } else if (group3 == "RAIDType") {
+      title3 <- "RAID Type"
    }
 
    plot <- ggplot(medians, aes(x = !!sym(group1), y = median_sample, color = !!sym(group2), linetype = !!sym(group3))) +
       geom_point() +
       geom_line() +
-      scale_color_manual(values = c("high" = red, "med" = yellow, "none" = green)) +
+      #scale_color_manual(values = c("high" = red, "med" = yellow, "none" = green)) +
       labs(title = paste(ytitle," vs. ", title1, sep = ""),
          subtitle = paste("by ", title2, " and ", title3, sep = ""),
          x = title1,
