@@ -43,6 +43,8 @@ plot_3group <- function(df, datatype, ydata, group1, group2, group3, dashed_data
       title2 <- "Disk Stress"
    } else if (group2 == "ParityLevel") {
       title2 <- "Parity Level"
+   } else if (group2 == "RAIDType") {
+      title2 <- "RAID Type"
    }
 
    if (group3 == "RecordSize") {
@@ -119,13 +121,14 @@ plot_2group <- function(df, datatype, ydata, group1, group2) {
       title2 <- "Vdev Width"
    } else if (group2 == "VdevType") {
       title2 <- "Vdev Type"
+   } else if (group2 == "Topology") {
+      title2 <- "RAID Topology"
    }
 
    plot <- ggplot(medians, aes(x = !!sym(group1), y = median_sample, color = !!sym(group2))) +
       geom_point() +
       geom_line() +
       labs(title = paste(ytitle," vs. ", title1," by ", title2, sep = ""),
-         subtitle = "High CPU Stress",
          x = title1,
          y = yaxislabel,
          color = title2) +

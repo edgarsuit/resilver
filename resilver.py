@@ -13,16 +13,17 @@ import subprocess, shlex, math, time, os, random, csv, signal, sys, logging, psu
 fill_percent = 70             # Target pool fill percent for all tests
 physical_disk_size = "7.3T"   # Size of physical disks
 format_disks = True           # Format disks before creating pool
-format_size = "100G"          # Size to format disks to
+format_size = "500G"          # Size to format disks to
 target_disk = "sda"           # Disk to offline/online during testing
 results_file = "output.csv"   # Output file name
 log_file = "resilver.log"     # Log file name
-append_results = True        # Append results to existing output file instead of creating a new one
+append_results = True         # Append results to existing output file instead of creating a new one
+skip_pool_fill = False        # Skip pool fill step
 
 # starting_run can be used to resume testing from a specific run number
 # First value is the layout, second is the fragmentation level, third is the recordsize, and fourth is the test schedule
 # [0,0,0,0] starts from the beginning
-starting_test = [54, 0, 0, 0]
+starting_test = [0, 0, 0, 0]
 
 # Total number of disks in the pool
 TOTAL_NUM_DISKS = 82
@@ -36,7 +37,7 @@ frag_schedule = [
 
 # Recordsize values to test on each configuration
 recordsize_schedule = [
-   "1M"        # 0
+   "1M"           # 0
 ]
 
 # Tests to run on each configuration
@@ -80,6 +81,7 @@ def main():
    global test_index
    global starting_test
    global f
+   global skip_pool_fill
 
    overall_start_time = time.time()
 
@@ -145,7 +147,7 @@ def main():
    log.info("Total tests to run: " + str(total_tests) + " | Starting test number: " + str(starting_test_number))
 
    # Format disks if needed; destroy pool (if exists) before formatting
-   if format_disks:
+   if format_disks and not skip_pool_fill:
       destroy_pool()
       format(format_size)
 
@@ -173,14 +175,18 @@ def main():
             log.info("Starting recordsize: " + recordsize)
             
             # Destroy, recreate, and refill pool
-            destroy_pool()
-            create_pool(layout["layout"],layout["width"],recordsize,layout["minspares"])
+            if not skip_pool_fill:
+               destroy_pool()
+               create_pool(layout["layout"],layout["width"],recordsize,layout["minspares"])
             
             # Initialize test index to diplay during pool fill
             test_index = "[" + str(layouts.index(layout)) + ", " + str(frag_schedule.index(frag)) + ", " + str(recordsize_schedule.index(recordsize)) + ", -]"
             
             # fill_pool() returns the speed at which the pool was filled
-            fill_speed = fill_pool(fill_percent,frag)
+            if not skip_pool_fill:
+               fill_speed = fill_pool(fill_percent,frag)
+            else:
+               fill_speed = 0
 
             # Gather pool status for results CSV
             zfs_status = subprocess.check_output("zfs list -Hpo used,available tank/test",shell=True).decode("utf-8")
@@ -205,7 +211,19 @@ def main():
                except:
                   pass
                time.sleep(5)
-               subprocess.check_output("zpool export tank",shell=True)
+
+               # Pool will occasionally fail to export if pool is busy; retry until successful
+               pool_exported = False
+               export_attempts = 0
+               while pool_exported == False:
+                  try:
+                     subprocess.check_output("zpool export tank",shell=True)
+                     pool_exported = True
+                  except:
+                     export_attempts += 1
+                     time.sleep(30)
+                     log.info("Failed to export pool, retrying... Attempt " + str(export_attempts))
+
                subprocess.check_output("zpool import tank",shell=True)
 
                test_number = layouts.index(layout)*len(frag_schedule)*len(recordsize_schedule)*len(test_schedule) + \
@@ -473,6 +491,9 @@ def main():
          # Reset starting_test recordsize schedule to 0 otherwise those tests will be skipped on the next run
          starting_test[2] = 0
 
+         # If skipping pool fill, reset it after completed set of tests
+         skip_pool_fill = False
+
       # Reset starting_test frag schedule 0 otherwise those tests will be skipped on the next run
       starting_test[1] = 0
 
@@ -629,10 +650,6 @@ def get_disk_list():
       if disk_size == physical_disk_size:
          disk_list.append("/dev/" + dev_node)
 
-   # Put target disk at the end of the list so it doesn't end up as a hot spare
-   disk_list.remove("/dev/" + target_disk)
-   disk_list.append("/dev/" + target_disk)
-
    return(disk_list)
 
 # Format disks to a specified size
@@ -654,8 +671,8 @@ def format(format_size):
       # If disk is not formatted to the specified size, format it. If it has already been formatted to the correct size, skip it
       if partition_info != format_size:
          log.info("Formatting " + disk + "...")
-         subprocess.check_output("sgdisk -Z " + disk,shell=True,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
-         subprocess.check_output("sgdisk -n 0:0:+" + format_size + " " + disk,shell=True,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+         subprocess.check_output("sgdisk -Z " + disk,shell=True,stderr=subprocess.DEVNULL)
+         subprocess.check_output("sgdisk -n 0:0:+" + format_size + " " + disk,shell=True,stderr=subprocess.DEVNULL)
          num_formatted += 1
       else:
          num_skipped += 1
@@ -811,6 +828,9 @@ def create_pool(layout,vdev_width,recordsize,minspares):
    # Get a list of disks to use for the pool
    disk_list = get_disk_list()
 
+   # Remove target disk from the list so it doesn't end up as a spare
+   disk_list.remove("/dev/" + target_disk)
+
    # If the minimum spare count is set, pop the first disk(s) off the list and add them to the spares list
    spares = ""
    if minspares != 0:
@@ -820,6 +840,9 @@ def create_pool(layout,vdev_width,recordsize,minspares):
          else:
             spares += disk_list[0] + " "
          disk_list.pop(0)
+
+   # Re-instert target disk at the head of the list
+   disk_list.insert(0, "/dev/" + target_disk)
 
    # Use the remaining disks to form the vdevs
    num_disks = len(disk_list)
@@ -982,7 +1005,12 @@ def fill_pool(fill_percent,frag_level):
       elif frag_level == "none":
          cmd += "--numjobs=8 \\"
          cmd += "--bs=1Mi \\"
-         cmd += "--filesize=100Mi \\"
+         # Smaller pools should use smaller files otherwise 0-length files will be created with causes issues with read_latency_monitor()
+         if fill_size < 8 * 2000 * 100 * 1024**2:
+            file_file_size = int(fill_size/(8 * 2000)/1024**2)
+            cmd += "--filesize=" + str(file_file_size) + "Mi \\"
+         else:
+            cmd += "--filesize=100Mi \\"
       cmd += "--name=fill" + str(run_number)
 
       # Start the fill process
@@ -1110,6 +1138,11 @@ def get_resilver_status():
             # If resilver is at 100%, time left will not be listed in the zpool status output
             if time_left == "no":
                time_left = "00:00:00" 
+            if line.split()[5] == "days":
+               days_left = int(line.split()[4])
+               time_left = line.split()[6]
+               time_left_hrs = int(time_left.split(":")[0]) + 24 * days_left
+               time_left = time_left.replace(time_left.split(":")[0],str(time_left_hrs))
       # Return all the resilver progress information
       return ("resilvering",scan_speed,issue_speed,percent_done,time_left)
    
@@ -1121,6 +1154,11 @@ def get_resilver_status():
          if raid_type == "draid":
             if "resilvered" in line:
                resilver_time = line.split()[5]
+               if line.split()[6] == "days":
+                  resilver_days = int(line.split()[5])
+                  resilver_time = line.split()[7]
+                  resilver_time_hrs = int(resilver_time.split(":")[0]) + 24 * resilver_days
+                  resilver_time = resilver_time.replace(resilver_time.split(":")[0],str(resilver_time_hrs))
             if "scanned," in line:
                scanned = line.split()[0]
                issued = line.split()[4]
@@ -1134,6 +1172,11 @@ def get_resilver_status():
                resilver_time = line.split()[4]
                scanned = "-"
                issued = line.split()[2]
+               if line.split()[5] == "days":
+                  resilver_days = int(line.split()[4])
+                  resilver_time = line.split()[6]
+                  resilver_time_hrs = int(resilver_time.split(":")[0]) + 24 * resilver_days
+                  resilver_time = resilver_time.replace(resilver_time.split(":")[0],str(resilver_time_hrs))
       
       # Return resilver completion information
       return ("complete",resilver_time,scanned,issued)

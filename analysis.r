@@ -9,6 +9,51 @@ resilver_results_new <- read.csv("output.csv")
 names(resilver_results_old) <- names(resilver_results_new)
 resilver_results <- rbind(resilver_results_old, resilver_results_new)
 
+resilver_results <- resilver_results %>%
+   mutate(EffectiveWidth = ifelse((VdevType == "draid1" | VdevType == "draid2" | VdevType == "draid3"), as.integer(dRAIDDataDisks) + ParityLevel, VdevWidth))
+
+resilver_results <- resilver_results %>%
+   mutate(RAIDType = ifelse((VdevType == "draid1" | VdevType == "draid2" | VdevType == "draid3"), "draid", "raidz"))
+
+raidz1 <- resilver_results %>% filter(VdevType == "raidz1" & NumHotSpares == 2 & RecordSize == "1M")
+draid1_82w <- resilver_results %>% filter(VdevType == "draid1" & RecordSize == "1M" & VdevWidth == 82)
+draid1_41w <- resilver_results %>% filter(VdevType == "draid1" & RecordSize == "1M" & VdevWidth == 41)
+
+flash_study <- rbind(raidz1, draid1_82w, draid1_41w)
+
+flash_study <- flash_study %>% mutate(Topology = ifelse(VdevType == "raidz1", "RAIDZ1", ifelse(VdevWidth == 82, "dRAID1 82W", "dRAID1 41W")))
+
+
+plot_2group(
+   flash_study,
+   "dRAID2 & RAIDZ1",
+   "ResilverTimeMinutes",
+   "EffectiveWidth",
+   "Topology"
+)
+
+plot_2group(
+   flash_study,
+   "dRAID1 & RAIDZ1",
+   "PoolAFR1percent100x",
+   "EffectiveWidth",
+   "Topology"
+)
+
+
+
+plot_3group(
+   draid_raidz,
+   "dRAID & RAIDZ",
+   "ResilverTimeMinutes",
+   "EffectiveWidth",
+   "ParityLevel",
+   "RAIDType",
+   "raidz",
+   "draid"
+)
+
+
 raidz2 <- resilver_results %>% filter(VdevType == "raidz2" & NumHotSpares == 2)
 raidz <- resilver_results %>% filter((VdevType == "raidz1" | VdevType == "raidz2" | VdevType == "raidz3") & NumHotSpares == 2)
 
