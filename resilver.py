@@ -1142,7 +1142,7 @@ def get_resilver_status():
                days_left = int(line.split()[4])
                time_left = line.split()[6]
                time_left_hrs = int(time_left.split(":")[0]) + 24 * days_left
-               time_left = time_left.replace(time_left.split(":")[0],str(time_left_hrs))
+               time_left = time_left.replace(time_left.split(":")[0],str(time_left_hrs), 1)
       # Return all the resilver progress information
       return ("resilvering",scan_speed,issue_speed,percent_done,time_left)
    
@@ -1158,7 +1158,7 @@ def get_resilver_status():
                   resilver_days = int(line.split()[5])
                   resilver_time = line.split()[7]
                   resilver_time_hrs = int(resilver_time.split(":")[0]) + 24 * resilver_days
-                  resilver_time = resilver_time.replace(resilver_time.split(":")[0],str(resilver_time_hrs))
+                  resilver_time = resilver_time.replace(resilver_time.split(":")[0],str(resilver_time_hrs), 1)
             if "scanned," in line:
                scanned = line.split()[0]
                issued = line.split()[4]
@@ -1176,7 +1176,7 @@ def get_resilver_status():
                   resilver_days = int(line.split()[4])
                   resilver_time = line.split()[6]
                   resilver_time_hrs = int(resilver_time.split(":")[0]) + 24 * resilver_days
-                  resilver_time = resilver_time.replace(resilver_time.split(":")[0],str(resilver_time_hrs))
+                  resilver_time = resilver_time.replace(resilver_time.split(":")[0],str(resilver_time_hrs), 1)
       
       # Return resilver completion information
       return ("complete",resilver_time,scanned,issued)
